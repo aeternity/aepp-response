@@ -7,6 +7,11 @@ import store from './store';
 
 Vue.config.productionTip = false;
 
+router.beforeEach((to, from, next) => {
+  window.scrollTo(0, 0);
+  next();
+});
+
 /* eslint-disable no-new */
 new Vue({
   el: '#app',
