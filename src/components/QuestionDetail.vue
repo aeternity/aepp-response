@@ -52,7 +52,7 @@
 </template>
 
 <script>
-  import { AePanel, AeHr, AeHrProgressBar } from '@aeternity/aepp-components';
+  import { AePanel, AeHr, AeHrProgressBar } from 'aepp-components-davidyuk';
   import TextMuted from './TextMuted';
   import QuestionStatistic from './QuestionStatistic';
   import AeContentButton from './AeContentButton';
@@ -95,7 +95,7 @@
 
 <style lang="scss" scoped>
   @import url('https://fonts.googleapis.com/css?family=Roboto+Mono:500');
-  @import '~@aeternity/aepp-components/dist/variables.scss';
+  @import '~aepp-components-davidyuk/dist/variables.scss';
 
   .question-detail {
     padding: 0 110px;

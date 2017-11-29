@@ -20,7 +20,7 @@
 </template>
 
 <script>
-  import { AeFilterList, AeFilterItem } from '@aeternity/aepp-components';
+  import { AeFilterList, AeFilterItem } from 'aepp-components-davidyuk';
   import QuestionListItem from './QuestionListItem';
 
   export default {

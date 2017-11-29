@@ -20,7 +20,7 @@
 <script>
   import { mapState } from 'vuex';
   import { focus } from 'vue-focus';
-  import { AeModal, AeAmount } from '@aeternity/aepp-components';
+  import { AeModal, AeAmount } from 'aepp-components-davidyuk';
   import AeContentButton from './AeContentButton';
 
   export default {

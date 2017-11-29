@@ -26,7 +26,7 @@
   import { mapState, mapMutations } from 'vuex';
   import {
     AeMain, AeHeader, AeHeaderButton, AeHeaderAlert, AeAddButton,
-  } from '@aeternity/aepp-components';
+  } from 'aepp-components-davidyuk';
   import CreateQuestionModal from './components/CreateQuestionModal';
   import SupportAuthorModal from './components/SupportModal';
 
@@ -56,7 +56,7 @@
 
 <style lang="scss">
   @import "../node_modules/font-awesome/css/font-awesome.css";
-  @import '~@aeternity/aepp-components/dist/variables.scss';
+  @import '~aepp-components-davidyuk/dist/variables.scss';
 
   .secondary {
     font-size: 12px;

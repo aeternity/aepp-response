@@ -14,7 +14,7 @@
     "lint": "eslint --ext .js,.vue src test/unit/specs test/e2e/specs"
   },
   "dependencies": {
-    "@aeternity/aepp-components": "0.0.1",
+    "aepp-components-davidyuk": "0.0.4",
     "babel-runtime": "^6.26.0",
     "emoji-datasource-apple": "^4.0.0",
     "font-awesome": "^4.7.0",

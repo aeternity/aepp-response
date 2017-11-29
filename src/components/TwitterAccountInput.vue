@@ -40,7 +40,7 @@
 </template>
 
 <script>
-  import { AeHr } from '@aeternity/aepp-components';
+  import { AeHr } from 'aepp-components-davidyuk';
 
   export default {
     props: {
@@ -102,7 +102,7 @@
 </script>
 
 <style lang="scss" scoped>
-  @import '~@aeternity/aepp-components/dist/variables.scss';
+  @import '~aepp-components-davidyuk/dist/variables.scss';
 
   .twitter-account-input {
     position: relative;

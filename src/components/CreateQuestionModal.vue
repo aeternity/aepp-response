@@ -117,7 +117,7 @@
 <script>
   import { mapState, mapMutations } from 'vuex';
   import { focus } from 'vue-focus';
-  import { AeModal, AeAmount } from '@aeternity/aepp-components';
+  import { AeModal, AeAmount } from 'aepp-components-davidyuk';
   import AeContentButton from './AeContentButton';
   import TextMuted from './TextMuted';
   import TwitterAccountInput from './TwitterAccountInput';
@@ -160,7 +160,7 @@
 </script>
 
 <style lang="scss" scoped>
-  @import '~@aeternity/aepp-components/dist/variables.scss';
+  @import '~aepp-components-davidyuk/dist/variables.scss';
 
   .create-question-modal {
     .avatar {

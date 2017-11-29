@@ -19,7 +19,7 @@
 </template>
 
 <script>
-  import { AePanel, AeCategory } from '@aeternity/aepp-components';
+  import { AePanel, AeCategory } from 'aepp-components-davidyuk';
   import TextMuted from './TextMuted';
   import QuestionStatistic from './QuestionStatistic';
 
@@ -30,7 +30,7 @@
 </script>
 
 <style lang="scss" scoped>
-  @import '~@aeternity/aepp-components/dist/variables.scss';
+  @import '~aepp-components-davidyuk/dist/variables.scss';
 
   .question-list-item {
     display: flex;
