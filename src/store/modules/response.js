@@ -177,20 +177,14 @@ export default {
         createdAt: new Date(),
       });
     },
-    searchTwitterAccount: _.throttle(({ commit, state }, query) => {
+    searchTwitterAccount: _.throttle(async ({ commit, state }, query) => {
       if (!query || state.twitterAccounts.searchResults[query]) return;
       commit('markSearchResultsAsRequested', query);
-      setTimeout(() =>
-        commit('addSearchResults', {
-          query,
-          accounts: _.range(1, 4)
-            .map(repeats => _.times(repeats, () => query).join(' '))
-            .map(q => ({
-              name: _.startCase(q),
-              screen_name: q,
-            })),
-        }),
-        50);
+      const response = await fetch(`https://stage-response.aepps.com/search?q=${query}&verified=1`);
+      commit('addSearchResults', {
+        query,
+        accounts: await response.json(),
+      });
     }, 300),
   },
 };
