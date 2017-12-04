@@ -28,7 +28,7 @@
           tabindex="-1"
           :class="{ active: dropDownState == idx }"
         >
-          <img :src="`https://twitter.com/${item.screen_name}/profile_image?size=normal`" />
+          <img :src="`https://twitter.com/${item.screen_name}/profile_image?size=original`" />
           <span>
             <span>{{item.name}}</span><br />
             {{item.screen_name}}
@@ -178,6 +178,7 @@
             height: 50px;
             border-radius: 25px;
             margin-right: 12px;
+            object-fit: cover;
           }
 
           span {

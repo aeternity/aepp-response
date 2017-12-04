@@ -102,11 +102,12 @@
     overflow: hidden;
 
     .twitter-avatar {
-      min-width: 80px;
+      width: 80px;
       height: 80px;
       border-radius: 40px;
       margin: 0 auto;
       display: block;
+      object-fit: cover;
     }
 
     .twitter-account {
