@@ -5,7 +5,7 @@
       <ae-amount v-model="amount" :min="1" />
 
       <ae-content-button>
-        <img :src="require(`emoji-datasource-apple/img/apple/64/${'👏'.codePointAt(0).toString(16)}.png`)" />
+        <img :src="require(`emoji-datasource-apple/img/apple/64/1f44f.png`)" />
         Make Transaction
       </ae-content-button>
 

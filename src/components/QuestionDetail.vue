@@ -30,7 +30,7 @@
         </tr>
       </table>
       <ae-content-button @click="showSupportModal">
-        <img :src="require(`emoji-datasource-apple/img/apple/64/${'👏'.codePointAt(0).toString(16)}.png`)" />
+        <img :src="require(`emoji-datasource-apple/img/apple/64/1f44f.png`)" />
         Support Question
       </ae-content-button>
       <div class="secondary minimum-amount">
@@ -43,7 +43,7 @@
         Twitter with a short video of you. Easily reply with this button:
       </div>
       <ae-content-button to="https://twitter.com/" aubergine>
-        <img :src="require(`emoji-datasource-apple/img/apple/64/${'✏'.codePointAt(0).toString(16)}-fe0f.png`)" />
+        <img :src="require(`emoji-datasource-apple/img/apple/64/270f-fe0f.png`)" />
         Answer on Twitter
       </ae-content-button>
     </div>
