@@ -14,11 +14,15 @@
     "lint": "eslint --ext .js,.vue src test/unit/specs test/e2e/specs"
   },
   "dependencies": {
+    "@aeternity/id-manager-provider": "0.0.9",
     "aepp-components-davidyuk": "0.0.4",
     "babel-runtime": "^6.26.0",
+    "bignumber.js": "^5.0.0",
+    "bluebird": "^3.5.1",
     "emoji-datasource-apple": "^4.0.0",
     "font-awesome": "^4.7.0",
     "format-number": "^3.0.0",
+    "ipfs-mini": "^1.1.2",
     "lodash": "^4.17.4",
     "vee-validate": "^2.0.0-rc.21",
     "vue": "^2.4.2",
@@ -26,7 +30,7 @@
     "vue-moment": "^2.2.0",
     "vue-router": "^3.0.0",
     "vuex": "^3.0.0",
-    "vuex-router-sync": "^5.0.0"
+    "web3": "^1.0.0-beta.26"
   },
   "devDependencies": {
     "autoprefixer": "^7.1.2",

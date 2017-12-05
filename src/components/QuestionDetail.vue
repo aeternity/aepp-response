@@ -23,7 +23,7 @@
       <ae-hr />
       <h2 class="highest-supporters">Highest supporters</h2>
       <table>
-        <tr v-for="supporter in highestSupporters">
+        <tr v-for="supporter in question.highestSupporters">
           <td>{{supporter.address.slice(0, 8)}}...</td>
           <td><text-muted>{{supporter.lastSupportAt | moment('calendar')}}</text-muted></td>
           <td>{{supporter.amount}}&nbsp;Æ</td>
@@ -67,16 +67,15 @@
     },
     computed: {
       question() {
+        if (!this.id.startsWith('0x')) {
+          const q = Object.values(this.$store.state.response.questions)
+            .find(({ ipfsHash }) => ipfsHash === this.id);
+          if (q && q.id.startsWith('0x') && this.$store.state.response.questions[q.id]) {
+            this.$router.replace({ name: 'question', params: { id: q.id } });
+          }
+          return q;
+        }
         return this.$store.state.response.questions[this.id];
-      },
-      highestSupporters() {
-        return Object.keys(this.question.supporters)
-          .map(address => ({
-            ...this.question.supporters[address],
-            address,
-          }))
-          .sort((a, b) => b.amount - a.amount)
-          .slice(0, 5);
       },
       foundation() {
         return this.$store.state.response.foundations[this.question.foundationId];
@@ -84,7 +83,10 @@
     },
     methods: {
       close() {
-        this.$router.push(this.$store.state.route.from.path);
+        this.$router.push({
+          name: 'question-list',
+          params: this.$store.state.response.lastQuestionListParams,
+        });
       },
       showSupportModal() {
         this.$store.commit('showSupportModalForQuestion', this.id);

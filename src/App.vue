@@ -31,6 +31,9 @@
   import SupportAuthorModal from './components/SupportModal';
 
   export default {
+    beforeCreate() {
+      this.$store.dispatch('init');
+    },
     components: {
       AeMain,
       AeHeader,
@@ -43,6 +46,12 @@
     computed: mapState({
       alert: state => state.response.alert,
     }),
+    watch: {
+      $route(to, { name, params }) {
+        if (name !== 'question-list') return;
+        this.$store.commit('setLastQuestionListParams', params);
+      },
+    },
     methods: {
       ...mapMutations({
         toggleCreateQuestionModal: 'toggleCreateQuestionModal',
