@@ -102,6 +102,9 @@ export default {
     setAlert(state, alert) {
       state.alert = alert;
     },
+    setLastQuestionListParams(state, params) {
+      state.lastQuestionListParams = params;
+    },
     setQuestion(state, question) {
       Vue.set(state.questions, question.id, {
         ...defaultQuestion(),

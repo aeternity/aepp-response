@@ -84,7 +84,10 @@
     },
     methods: {
       close() {
-        this.$router.push(this.$store.state.route.from.path);
+        this.$router.push({
+          name: 'question-list',
+          params: this.$store.state.response.lastQuestionListParams,
+        });
       },
       showSupportModal() {
         this.$store.commit('showSupportModalForQuestion', this.id);
