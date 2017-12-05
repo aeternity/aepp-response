@@ -30,8 +30,7 @@
         sorts: {
           newest: (a, b) => b.createdAt - a.createdAt,
           'highest support': (a, b) => b.amount - a.amount,
-          'most supporters': (a, b) => Object.keys(b.supporters).length
-            - Object.keys(a.supporters).length,
+          'most supporters': (a, b) => b.supportersCount - a.supportersCount,
         },
       };
     },

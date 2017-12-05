@@ -2,90 +2,61 @@
 
 import Vue from 'vue';
 import _ from 'lodash';
+import Web3 from 'web3';
+import IdManagerProvider from '@aeternity/id-manager-provider';
+import IPFS from 'ipfs-mini';
+import Bluebird from 'bluebird';
+import BigNumber from 'bignumber.js';
+import AETokenMeta from '../../assets/contracts/AEToken.json';
+import ContractRegistryMeta from '../../assets/contracts/ContractRegistry.json';
+import QuestionMeta from '../../assets/contracts/Question.json';
+import QuestionCreatorMeta from '../../assets/contracts/QuestionCreator.json';
 
-const randomDataBeforeNow = () =>
-  new Date(Date.now() - Math.round((Math.random() * 1000 * 60 * 60 * 24 * 30)));
-const randomDataAfterNow = () =>
-  new Date(Date.now() + Math.round((Math.random() * 1000 * 60 * 60 * 24 * 30)));
-const randomAddress = () => `0x${''.padStart(6, Math.random().toString(16).slice(2))}`;
-const randomSupporters = () =>
-  (new Array(5)).fill().reduce(p => ({
-    ...p,
-    [randomAddress()]: {
-      lastSupportAt: randomDataBeforeNow(),
-      amount: (Math.random() * 50).toFixed(2),
-    },
-  }), {});
-
+const web3 = new Web3();
+const ipfs = new IPFS({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' });
+const idManager = new IdManagerProvider({
+  skipSecurity: process.env.NODE_ENV === 'development',
+});
+let token;
+let registry;
+let questionCreatorAddress;
+const decimals = 18;
 const defaultQuestion = () => ({
   twitter: '',
   amount: 0,
-  supporters: {},
-  supportIds: new Set(),
+  highestSupporters: [],
+  supportersCount: 0,
   title: '',
   body: '',
   author: '',
   createdAt: 0,
   deadlineAt: 0,
-  answered: false,
-  foundationId: 0,
+  tweetId: 0,
+  foundationId: '',
+  contract: null,
 });
+
+ipfs.addJSONAsync = Bluebird.promisify(ipfs.addJSON);
+ipfs.catJSONAsync = Bluebird.promisify(ipfs.catJSON);
 
 export default {
   state: () => ({
-    account: randomAddress(),
+    account: null,
     createQuestionModalShown: false,
     supportModalQuestion: false,
     alert: '',
-
     foundations: {
-      1: { name: 'Refugees foundation E.V.', url: 'http://example.com/' },
-      2: { name: 'Foundation 2', url: 'http://example.com/' },
-      3: { name: 'Foundation 3', url: 'http://example.com/' },
-      4: { name: 'Foundation 4', url: 'http://example.com/' },
-      5: { name: 'Foundation 5', url: 'http://example.com/' },
-    },
-
-    questions: {
-      1: {
-        ...defaultQuestion(),
-        twitter: 'AngelaMerkeICDU',
-        title: 'Only the Jamaica Coalition?',
-        body: 'The rumour is the Jamaica Coalition. Is that the only one that is now being considered?',
-        amount: 1201,
-        author: randomAddress(),
-        createdAt: randomDataBeforeNow(),
-        deadlineAt: randomDataAfterNow(),
-        supporters: {},
-        foundationId: 1,
+      '0xfA491DF8780761853D127A9f7b2772D688A0E3B5': {
+        name: 'Refugees foundation E.V.',
+        url: 'http://example.com/',
       },
-      2: {
-        ...defaultQuestion(),
-        twitter: 'NASA',
-        title: 'Integer posuere erat a ante venenatis?',
-        body: 'Dapibus posuere velit aliquet. Maecenas faucibus…',
-        amount: 1200,
-        author: randomAddress(),
-        createdAt: randomDataBeforeNow(),
-        deadlineAt: randomDataAfterNow(),
-        supporters: randomSupporters(),
-        answered: true,
-        foundationId: 2,
-      },
-      3: {
-        ...defaultQuestion(),
-        twitter: 'cnnbrk',
-        title: 'Vestibulum id ligula porta felis euismod semper?',
-        body: 'Morbi leo risus, porta ac consectetur ac, vestibulum…',
-        amount: 1200,
-        author: randomAddress(),
-        createdAt: new Date(),
-        deadlineAt: randomDataAfterNow(),
-        supporters: randomSupporters(),
-        foundationId: 3,
+      '0x45992982736870Fe45c41049C5F785d4E4cc38Ec': {
+        name: 'Foundation 2',
+        url: 'http://example.com/',
       },
     },
-
+    fetchedQuestionsCount: 0,
+    questions: {},
     twitterAccounts: {
       searchResults: {},
       exists: [],
@@ -93,6 +64,9 @@ export default {
   }),
 
   mutations: {
+    setAccount(state, account) {
+      state.account = account;
+    },
     toggleCreateQuestionModal(state) {
       state.createQuestionModalShown = !state.createQuestionModalShown;
     },
@@ -106,25 +80,21 @@ export default {
       state.lastQuestionListParams = params;
     },
     setQuestion(state, question) {
-      Vue.set(state.questions, question.id, {
+      const { id, ipfsHash } = question;
+      state.fetchedQuestionsCount += !state.questions[id] && id.startsWith('0x');
+      if (id.startsWith('0x') && state.questions[ipfsHash]) delete state.questions[ipfsHash];
+      Vue.set(state.questions, id, {
         ...defaultQuestion(),
-        ...state.questions[question.id],
+        ...state.questions[id],
         ...question,
       });
     },
-    supportQuestion(state, { id, questionId, supporterAccount, amount, createdAt }) {
-      if (!state.questions[questionId]) {
-        Vue.set(state.questions, questionId, defaultQuestion());
-      }
-      const { supportIds, supporters } = state.questions[questionId];
-      if (supportIds.has(id)) return;
-      supportIds.add(id);
-      if (!supporters[supporterAccount]) {
-        Vue.set(supporters, supporterAccount, { amount: 0, lastSupportAt: 0 });
-      }
-      supporters[supporterAccount].amount += amount;
-      supporters[supporterAccount].lastSupportAt = createdAt;
-      state.questions[questionId].amount += amount;
+    supportQuestion(state, { questionId, supporterAccount, amount, createdAt }) {
+      const { highestSupporters } = state.questions[questionId];
+      const supporter = highestSupporters.find(s => s.address === supporterAccount);
+      if (supporter) supporter.amount += amount;
+      else highestSupporters.push({ address: supporterAccount, amount, lastSupportAt: createdAt });
+      highestSupporters.sort((a, b) => b.amount - a.amount).splice(5);
     },
     markSearchResultsAsRequested(state, query) {
       Vue.set(state.twitterAccounts.searchResults, query, 'requested');
@@ -140,40 +110,162 @@ export default {
   },
 
   actions: {
+    async init({ state, commit, dispatch }) {
+      window.addEventListener('load', async () => {
+        if (await idManager.checkIdManager()) {
+          web3.setProvider(idManager.web3.currentProvider);
+        } else if (window.parent.web3) {
+          web3.setProvider(window.parent.web3.currentProvider);
+        } else {
+          web3.setProvider(new Web3.providers.HttpProvider('https://kovan.infura.io'));
+        }
+
+        const networkId = await web3.eth.net.getId();
+        registry = new web3.eth.Contract(ContractRegistryMeta.abi,
+          ContractRegistryMeta.networks[networkId].address);
+        token = new web3.eth.Contract(AETokenMeta.abi, AETokenMeta.networks[networkId].address);
+        questionCreatorAddress = QuestionCreatorMeta.networks[networkId].address;
+
+        dispatch('syncQuestions');
+        setInterval(() => dispatch('syncQuestions'), 60 * 1000);
+
+        setInterval(() => {
+          web3.eth.getAccounts(async (error, accounts) => {
+            const account = accounts[0];
+            if (account === state.account) return;
+            commit('setAccount', error || !account ? null : account);
+          });
+        }, 500);
+      });
+    },
+    async syncQuestions({ state: { questions, fetchedQuestionsCount }, commit }) {
+      const questionsCount = +await registry.methods.getContractsCount().call();
+      const getHighestSupporters = async question =>
+        (await Promise.all(_.times(5, n => question.methods.highestDonors(n).call()
+          .then(async ({ addr: address, lastDonatedAt: lastSupportAt }) => ({
+            address,
+            lastSupportAt: new Date(lastSupportAt * 1000),
+            amount: +(new BigNumber(await question.methods.donorAmounts(address).call()))
+              .shift(-decimals),
+          }))))).filter(s => s.amount);
+      await Promise.all([
+        ..._.times(questionsCount - fetchedQuestionsCount, async (i) => {
+          const idx = i + fetchedQuestionsCount;
+          const questionAddress = await registry.methods.contracts(idx).call();
+          const question = new web3.eth.Contract(QuestionMeta.abi, questionAddress);
+          const [
+            twitter, amount, highestSupporters, supportersCount, ipfsHash, author,
+            createdAt, deadlineAt, tweetId, foundationId,
+          ] = await Promise.all([
+            question.methods.twitterAccount().call(),
+            question.methods.donations().call(),
+            getHighestSupporters(question),
+            question.methods.donorCount().call(),
+            question.methods.question().call(),
+            question.methods.author().call(),
+            question.methods.createdAt().call(),
+            question.methods.deadline().call(),
+            question.methods.tweetId().call(),
+            question.methods.charity().call(),
+          ]);
+          commit('setQuestion', {
+            id: questionAddress,
+            twitter,
+            amount: +(new BigNumber(amount)).shift(-decimals),
+            highestSupporters,
+            supportersCount: +supportersCount,
+            ipfsHash,
+            ...await ipfs.catJSONAsync(ipfsHash),
+            author,
+            createdAt: new Date(createdAt * 1000),
+            deadlineAt: new Date(deadlineAt * 1000),
+            tweetId: tweetId === '0' ? 0 : tweetId,
+            foundationId,
+          });
+        }),
+        ...Object.keys(questions).map(async (questionAddress) => {
+          if (!questionAddress.startsWith('0x')) return;
+          const question = new web3.eth.Contract(QuestionMeta.abi, questionAddress);
+          const [amount, highestSupporters, supportersCount, tweetId] = await Promise.all([
+            question.methods.donations().call(),
+            getHighestSupporters(question),
+            question.methods.donorCount().call(),
+            question.methods.tweetId().call(),
+          ]);
+          commit('setQuestion', {
+            id: questionAddress,
+            amount: +(new BigNumber(amount)).shift(-decimals),
+            highestSupporters,
+            supportersCount: +supportersCount,
+            tweetId: tweetId === '0' ? 0 : tweetId,
+          });
+        }),
+      ]);
+    },
     setAlert({ commit }, options) {
       window.scrollTo(0, 0);
       const { text, autoClose } = options.text ? options : { text: options };
       commit('setAlert', text);
       if (autoClose) setTimeout(() => commit('setAlert'), 3000);
     },
-    async createQuestion({ state, commit, dispatch }, { amount, ...question }) {
+    async createQuestion({ state, commit, dispatch }, {
+      twitter, title, body, amount, foundationId, deadlineAt,
+    }) {
+      const ipfsHash = await ipfs.addJSONAsync({ title, body });
+      const encodeParameters = web3.eth.abi.encodeParameters.bind(web3.eth.abi);
+      const encodeString = string => web3.eth.abi.encodeParameter('string', string).slice(66);
+      const twitterEncoded = encodeString(twitter);
+      const multiHashEncoded = encodeString(ipfsHash);
+      const length = (twitterEncoded.length / 2) + (multiHashEncoded.length / 2) + (32 * 2);
+      const bytes = [
+        encodeParameters(['uint', 'uint'], [32 * 4, length]),
+        twitterEncoded,
+        multiHashEncoded,
+        encodeParameters(['address', 'uint'],
+          [foundationId, Math.floor(deadlineAt / 1000)]).slice(2),
+      ].join('');
+      await new Promise((resolve, reject) =>
+        token.methods.approveAndCall(
+          questionCreatorAddress,
+          (new BigNumber(amount)).shift(decimals),
+          bytes,
+        ).send({ from: state.account })
+          .on('transactionHash', resolve).on('error', reject));
       dispatch('setAlert', {
         text: '✓ Your question was send',
         autoClose: true,
       });
-      const id = Math.random().toString(16).slice(2);
+      const id = ipfsHash;
       commit('setQuestion', {
-        ...question,
         id,
+        twitter,
+        amount,
+        highestSupporters: [{ address: state.account, amount, lastSupportAt: new Date() }],
+        supportersCount: 1,
+        ipfsHash,
+        title,
+        body,
         author: state.account,
         createdAt: new Date(),
-      });
-      commit('supportQuestion', {
-        id: Math.random().toString(16).slice(2),
-        questionId: id,
-        supporterAccount: state.account,
-        amount,
-        createdAt: new Date(),
+        deadlineAt,
+        tweetId: 0,
+        foundationId,
       });
       return id;
     },
     async supportQuestion({ state, commit, dispatch }, { questionId, amount }) {
+      await new Promise((resolve, reject) =>
+        token.methods.approveAndCall(
+          questionId,
+          (new BigNumber(amount)).shift(decimals),
+          web3.eth.abi.encodeParameter('uint', 32 * 4),
+        ).send({ from: state.account })
+          .on('transactionHash', resolve).on('error', reject));
       dispatch('setAlert', {
         text: '✓ Your support was send',
         autoClose: true,
       });
       commit('supportQuestion', {
-        id: Math.random().toString(16).slice(2),
         questionId,
         supporterAccount: state.account,
         amount,

@@ -2,7 +2,7 @@
   <table class="question-statistic">
     <tr :class="{ 'large-font': largeFont }">
       <td>{{question.amount.toLocaleString('en')}} Æ</td>
-      <td>{{Object.keys(question.supporters).length}}</td>
+      <td>{{question.supportersCount}}</td>
       <td :class="{ active: !daysLeft }">{{daysLeft}}</td>
     </tr>
     <tr>
