@@ -12,12 +12,19 @@
       </div>
       <h2 class="title">“{{question.title}}"</h2>
       <div class="body">{{question.body}}</div>
+      <tweet
+        v-if="question.tweetId"
+        class="tweet"
+        :id="question.tweetId"
+        :options="{ conversation: 'none', width: 550, align: 'center' }"
+      />
       <ae-hr-progress-bar
+        v-else
         :ratio="(Date.now() - question.createdAt) / (question.deadlineAt - question.createdAt)"
       />
       <question-statistic largeFont :question="question" />
       <div class="will-be-donated">
-        Will be donated to
+        <template v-if="!question.tweetId">Will be</template> donated to
         <a :href="foundation.url" target="_blank">{{foundation.name}}</a>
       </div>
       <ae-hr />
@@ -29,23 +36,25 @@
           <td>{{supporter.amount}}&nbsp;Æ</td>
         </tr>
       </table>
-      <ae-content-button @click="showSupportModal">
-        <img :src="require(`emoji-datasource-apple/img/apple/64/1f44f.png`)" />
-        Support Question
-      </ae-content-button>
-      <div class="secondary minimum-amount">
-        Minimum amount to support: 1&nbsp;Æ
-      </div>
-      <ae-hr />
-      <div class="are-you">
-        Are you @{{question.twitter}} and you want to respond to this question, so we can
-        donate the full amount to a good cause? Answer the question with a reply on
-        Twitter with a short video of you. Easily reply with this button:
-      </div>
-      <ae-content-button to="https://twitter.com/" aubergine>
-        <img :src="require(`emoji-datasource-apple/img/apple/64/270f-fe0f.png`)" />
-        Answer on Twitter
-      </ae-content-button>
+      <template v-if="!question.tweetId">
+        <ae-content-button @click="showSupportModal">
+          <img :src="require(`emoji-datasource-apple/img/apple/64/1f44f.png`)" />
+          Support Question
+        </ae-content-button>
+        <div class="secondary minimum-amount">
+          Minimum amount to support: 1&nbsp;Æ
+        </div>
+        <ae-hr />
+        <div class="are-you">
+          Are you @{{question.twitter}} and you want to respond to this question, so we can
+          donate the full amount to a good cause? Answer the question with a reply on
+          Twitter with a short video of you. Easily reply with this button:
+        </div>
+        <ae-content-button to="https://twitter.com/" aubergine>
+          <img :src="require(`emoji-datasource-apple/img/apple/64/270f-fe0f.png`)" />
+          Answer on Twitter
+        </ae-content-button>
+      </template>
     </div>
   </ae-panel>
   <p v-else>This wall question seems to be missing.</p>
@@ -53,6 +62,7 @@
 
 <script>
   import { AePanel, AeHr, AeHrProgressBar } from 'aepp-components-davidyuk';
+  import { Tweet } from 'vue-tweet-embed';
   import TextMuted from './TextMuted';
   import QuestionStatistic from './QuestionStatistic';
   import AeContentButton from './AeContentButton';
@@ -60,7 +70,7 @@
   export default {
     props: ['id'],
     components: {
-      AePanel, AeHr, AeHrProgressBar, TextMuted, QuestionStatistic, AeContentButton,
+      AePanel, AeHr, AeHrProgressBar, TextMuted, QuestionStatistic, AeContentButton, Tweet,
     },
     data() {
       return { supportersVisible: false };
@@ -137,6 +147,10 @@
       line-height: 28px;
       color: $black;
       margin-bottom: 20px;
+    }
+
+    .tweet {
+      margin: 20px 0 40px 0;
     }
 
     .will-be-donated {
