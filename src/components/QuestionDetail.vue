@@ -1,11 +1,12 @@
 <template>
   <ae-panel v-if="question" :closeHandler="close">
     <div class="question-detail">
-      <img
-        class="twitter-avatar"
-        :src="`https://twitter.com/${question.twitter}/profile_image?size=original`"
-      />
-      <div class="twitter-account">@{{question.twitter}}</div>
+      <div class="twitter-account">
+        <a :href="`https://twitter.com/${question.twitter}`" target="_blank">
+          <img :src="`https://twitter.com/${question.twitter}/profile_image?size=original`" />
+          @{{question.twitter}}
+        </a>
+      </div>
       <div class="secondary">
         Is asked by <span>{{question.author.slice(0, 8)}}...</span>
         to respond to the following question:
@@ -113,21 +114,25 @@
     padding: 0 110px;
     overflow: hidden;
 
-    .twitter-avatar {
-      width: 80px;
-      height: 80px;
-      border-radius: 40px;
-      margin: 0 auto;
-      display: block;
-      object-fit: cover;
-    }
-
     .twitter-account {
-      font-size: 18px;
-      line-height: 28px;
       text-align: center;
-      color: $black;
-      margin-top: 8px;
+
+      a {
+        text-decoration: none;
+        display: inline-block;
+        font-size: 18px;
+        line-height: 28px;
+        color: $black;
+
+        img {
+          width: 80px;
+          height: 80px;
+          border-radius: 40px;
+          display: block;
+          object-fit: cover;
+          margin: 0 auto 8px auto;
+        }
+      }
     }
 
     .twitter-account + .secondary {
