@@ -112,12 +112,14 @@ export default {
   actions: {
     async init({ state, commit, dispatch }) {
       window.addEventListener('load', async () => {
+        let localProvider = true;
         if (await idManager.checkIdManager()) {
           web3.setProvider(idManager.web3.currentProvider);
         } else if (window.parent.web3) {
           web3.setProvider(window.parent.web3.currentProvider);
         } else {
           web3.setProvider(new Web3.providers.HttpProvider('https://kovan.infura.io'));
+          localProvider = false;
         }
 
         const networkId = await web3.eth.net.getId();
@@ -129,6 +131,7 @@ export default {
         dispatch('syncQuestions');
         setInterval(() => dispatch('syncQuestions'), 60 * 1000);
 
+        if (!localProvider) return;
         setInterval(() => {
           web3.eth.getAccounts(async (error, accounts) => {
             const account = accounts[0];
