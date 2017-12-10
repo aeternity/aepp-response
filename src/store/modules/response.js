@@ -131,14 +131,13 @@ export default {
         dispatch('syncQuestions');
         setInterval(() => dispatch('syncQuestions'), 60 * 1000);
 
-        if (!localProvider) return;
-        setInterval(() => {
-          web3.eth.getAccounts(async (error, accounts) => {
-            const account = accounts[0];
-            if (account === state.account) return;
-            commit('setAccount', error || !account ? null : account);
-          });
-        }, 500);
+        const accountPolling = async () => {
+          const accounts = await web3.eth.getAccounts();
+          const account = accounts[0] || null;
+          if (account !== state.account) commit('setAccount', account);
+          setTimeout(accountPolling, 500);
+        };
+        if (localProvider) await accountPolling();
       });
     },
     async syncQuestions({ state: { questions, fetchedQuestionsCount }, commit }) {
