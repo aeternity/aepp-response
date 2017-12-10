@@ -8,7 +8,10 @@
       <img :src="`https://twitter.com/${question.twitter}/profile_image?size=original`" />
       <div class="content">
         <h2>@{{question.twitter}}</h2>
-        <text-muted>{{question.title}} – {{question.body}}</text-muted>
+        <text-muted>
+          {{question.title}}
+          <template v-if="question.body"> – {{question.body}}</template>
+        </text-muted>
         <question-statistic :question="question" />
       </div>
       <div class="arrow">

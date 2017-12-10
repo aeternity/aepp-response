@@ -52,7 +52,7 @@
         name="body"
         :id="`${_uid}_body`"
         v-model="body"
-        v-validate="'required|max:200'"
+        v-validate="'max:200'"
         :class="{ danger: errors.has('body') }"
       />
 

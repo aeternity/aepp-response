@@ -12,7 +12,7 @@
         to respond to the following question:
       </div>
       <h2 class="title">“{{question.title}}"</h2>
-      <div class="body">{{question.body}}</div>
+      <div class="body" v-if="question.body">{{question.body}}</div>
       <tweet
         v-if="question.tweetId"
         class="tweet"
