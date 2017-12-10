@@ -277,7 +277,7 @@ export default {
     searchTwitterAccount: _.throttle(async ({ commit, state }, query) => {
       if (!query || state.twitterAccounts.searchResults[query]) return;
       commit('markSearchResultsAsRequested', query);
-      const response = await fetch(`https://stage-response.aepps.com/search?q=${query}`);
+      const response = await fetch(`https://stage-response.aepps.com/search?q=${encodeURIComponent(query)}`);
       commit('addSearchResults', {
         query,
         accounts: await response.json(),
