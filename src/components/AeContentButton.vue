@@ -5,7 +5,7 @@
   <a v-else-if="to" :href="to" target="_blank" :class="className" @click="click">
     <slot />
   </a>
-  <button v-else :class="className" @click="click">
+  <button v-else :class="className" @click="click" :type="type">
     <slot />
   </button>
 </template>
@@ -15,21 +15,27 @@
     props: {
       to: { type: [String, Object], required: false },
       aubergine: { type: Boolean, default: false },
+      disabled: { type: Boolean, default: false },
+      submit: { type: Boolean, default: false },
     },
     computed: {
       className() {
         return {
           'ae-content-button': true,
           aubergine: this.aubergine,
+          disabled: this.disabled,
         };
       },
       isExternalLink() {
         return this.to && (new URL(this.to, window.location)).host !== window.location.host;
       },
+      type() {
+        return this.submit && !this.disabled ? 'submit' : 'button';
+      },
     },
     methods: {
       click(e) {
-        this.$emit('click', e);
+        if (!this.disabled) this.$emit('click', e);
       },
     },
   };
@@ -59,6 +65,11 @@
 
     &.aubergine {
       background-color: $aubergine;
+    }
+
+    &.disabled {
+      opacity: .5;
+      cursor: not-allowed;
     }
   }
 </style>

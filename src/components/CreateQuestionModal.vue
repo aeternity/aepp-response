@@ -106,10 +106,14 @@
         :class="{ danger: errors.has('deadline') }"
       />
 
-      <ae-content-button>
+      <ae-content-button submit :disabled="!account">
         <img :src="require(`emoji-datasource-apple/img/apple/64/1f4b0.png`)" />
         Create Question
       </ae-content-button>
+
+      <div class="secondary" v-if="!account">
+        You need to activate the AE Identity Manager or Metamask.
+      </div>
     </form>
   </ae-modal>
 </template>
@@ -140,6 +144,7 @@
     computed: mapState({
       visible: state => state.response.createQuestionModalShown,
       foundations: state => state.response.foundations,
+      account: state => state.response.account,
     }),
     methods: {
       ...mapMutations({

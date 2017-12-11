@@ -4,14 +4,17 @@
       <label>Amount</label>
       <ae-amount v-model="amount" :min="1" />
 
-      <ae-content-button>
+      <ae-content-button submit :disabled="!account">
         <img :src="require(`emoji-datasource-apple/img/apple/64/1f44f.png`)" />
         Make Transaction
       </ae-content-button>
 
-      <div class="secondary">
+      <div class="secondary" v-if="account">
         You can support the question as much as you want,
         by simply changing the amount of the transaction.
+      </div>
+      <div class="secondary" v-else>
+        You need to activate the AE Identity Manager or Metamask.
       </div>
     </form>
   </ae-modal>
@@ -33,6 +36,7 @@
     directives: { focus },
     computed: mapState({
       questionId: state => state.response.supportModalQuestion,
+      account: state => state.response.account,
     }),
     methods: {
       closeHandler() {
