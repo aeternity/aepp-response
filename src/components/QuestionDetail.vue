@@ -41,7 +41,7 @@
           <img :src="require(`emoji-datasource-apple/img/apple/64/1f44f.png`)" />
           Support Question
         </ae-content-button>
-        <div class="secondary minimum-amount">
+        <div class="secondary">
           Minimum amount to support: 1&nbsp;Æ
         </div>
         <ae-hr />
@@ -134,10 +134,6 @@
       }
     }
 
-    .twitter-account + .secondary {
-      margin-top: 2px;
-    }
-
     .title {
       font-size: 24px;
       font-weight: bold;
@@ -205,11 +201,6 @@
           font-weight: 500;
         }
       }
-    }
-
-    .minimum-amount {
-      margin-top: 30px;
-      margin-bottom: 30px;
     }
 
     .are-you {
