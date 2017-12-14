@@ -68,14 +68,13 @@
   @import '~aepp-components-davidyuk/dist/variables.scss';
 
   .secondary {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 500;
     line-height: 16px;
     letter-spacing: 0.3px;
     text-align: center;
     color: $grey;
-    text-transform: uppercase;
-    margin-top: 30px;
+    margin-top: 15px;
 
     span {
       color: $maegenta;
