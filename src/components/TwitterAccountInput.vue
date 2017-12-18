@@ -1,7 +1,7 @@
 <template>
   <div class="twitter-account-input">
     <input
-      :value="value"
+      v-model="value"
       @focus="dropDownState = -1"
       @input="handleInput"
       @keydown.up.prevent="selectSearchResult(true)"
@@ -14,24 +14,21 @@
     <div v-if="dropDownState >= -1 && value">
       <div class="arrow" />
       <div class="search-results" @mouseover="dropDownState = -1">
-        <div class="message" v-if="!Array.isArray(searchResults)">
-          Loading ...
-        </div>
-        <div class="message" v-else-if="searchResults.length === 0">
-          No results for {{value}}
+        <div class="message" v-if="message">
+          {{message}}
         </div>
         <button
           v-else
-          @click="handleSearchResultClick(item.screen_name)"
+          @click="handleSearchResultClick(item)"
           v-for="(item, idx) in searchResults"
           type="button"
           tabindex="-1"
-          :class="{ active: dropDownState == idx }"
+          :class="{ active: dropDownState === idx }"
         >
-          <img :src="`https://twitter.com/${item.screen_name}/profile_image?size=original`" />
+          <img :src="item.imageUrl" />
           <span>
             <span>{{item.name}}</span><br />
-            {{item.screen_name}}
+            {{item.screenName}}
           </span>
         </button>
       </div>
@@ -40,23 +37,34 @@
 </template>
 
 <script>
+  import { mapState } from 'vuex';
   import { AeHr } from 'aepp-components-davidyuk';
 
   export default {
-    props: {
-      value: { type: String, default: 0 },
-    },
     components: { AeHr },
     data() {
       return {
+        value: '',
         dropDownState: -2,
       };
     },
-    computed: {
-      searchResults() {
-        return this.$store.state.response.twitterAccounts.searchResults[this.value];
+    computed: mapState({
+      searchResults(state) {
+        const results = state.response.userSearchResults[this.value];
+        return (Array.isArray(results) ? results : [])
+          .map(userId => state.response.twitterUsers[userId]);
       },
-    },
+      message(state) {
+        const results = state.response.userSearchResults[this.value];
+        switch (results) {
+          case 'requested': return 'Loading ...';
+          case 'failed': return 'Something went wrong.';
+          default:
+        }
+        if (results && results.length === 0) return `No results for ${this.value}`;
+        return '';
+      },
+    }),
     watch: {
       value(value) {
         this.$store.dispatch('searchTwitterAccount', value);
@@ -67,10 +75,13 @@
         const length = this.searchResults ? this.searchResults.length + 1 : 1;
         this.dropDownState = ((length + this.dropDownState + (up ? 0 : 2)) % length) - 1;
       },
-      handleInput(inputEvent) {
+      handleInput() {
         this.dropDownState = -1;
-        const { value } = inputEvent.target;
-        this.$emit('input', value);
+        this.$emit('input', '0');
+      },
+      inputUser(user) {
+        this.$emit('input', user ? user.id : '');
+        this.value = user ? user.screenName : '';
       },
       handleBlur(event) {
         let { relatedTarget: element } = event;
@@ -80,21 +91,19 @@
           element = element.parentElement;
         }
         if (!internalElement) {
-          if (!this.$store.state.response.twitterAccounts.exists.includes(
-              this.value.toLowerCase())) {
-            this.$emit('input', '');
-          }
+          this.inputUser(this.searchResults.find(u =>
+            u.screenName.toLowerCase() === this.value.toLowerCase()));
           this.dropDownState = -2;
         }
         this.$emit('blur', event);
       },
-      handleSearchResultClick(screenName) {
+      handleSearchResultClick(user) {
         this.dropDownState = -2;
-        this.$emit('input', screenName);
+        this.inputUser(user);
       },
       handleEnterPress() {
         if (this.dropDownState < 0) return;
-        this.$emit('input', this.searchResults[this.dropDownState].screen_name);
+        this.inputUser(this.searchResults[this.dropDownState]);
         this.dropDownState = -2;
       },
     },

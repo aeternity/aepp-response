@@ -1,10 +1,7 @@
 <template>
   <ae-modal v-if="visible" title="Create Question" @close="closeHandler">
     <form class="create-question-modal" @submit.prevent="createQuestion">
-      <img
-        :src="`https://twitter.com/${twitter}/profile_image?size=original`"
-        v-if="twitter" class="avatar"
-      />
+      <img v-if="avatarUrl" :src="avatarUrl" class="avatar" />
       <div v-else class="avatar" />
 
       <label :for="`${_uid}_twitter`">
@@ -19,7 +16,7 @@
       <twitter-account-input
         name="twitter"
         :id="`${_uid}_twitter`"
-        v-model="twitter"
+        v-model="twitterUserId"
         v-validate="'required'"
         :class="{ danger: errors.has('twitter') }"
       />
@@ -131,7 +128,7 @@
       const deadlineAt = new Date();
       deadlineAt.setMonth(deadlineAt.getMonth() + 6);
       return {
-        twitter: '',
+        twitterUserId: '',
         title: '',
         body: '',
         amount: 1,
@@ -145,6 +142,10 @@
       visible: state => state.response.createQuestionModalShown,
       foundations: state => state.response.foundations,
       account: state => state.response.account,
+      avatarUrl(state) {
+        const user = state.response.twitterUsers[this.twitterUserId];
+        return user && user.imageUrl;
+      },
     }),
     methods: {
       ...mapMutations({
@@ -153,11 +154,16 @@
       async createQuestion() {
         const valid = await this.$validator.validateAll();
         if (!valid) return;
-        const { twitter, title, body, amount, foundationId, deadlineAt } = this;
-        const id = await this.$store.dispatch('createQuestion',
-          { twitter, title, body, amount, foundationId, deadlineAt: new Date(deadlineAt) });
+        const { twitterUserId, title, body, amount, foundationId, deadlineAt } = this;
+        await this.$store.dispatch('createQuestion', {
+          twitterUserId, title, body, amount, foundationId, deadlineAt: new Date(deadlineAt),
+        });
         Object.assign(this.$data, this.$options.data());
-        this.$router.push({ name: 'question', params: { id } });
+        const { pendingQuestions } = this.$store.state.response;
+        this.$router.push({
+          name: 'question',
+          params: pendingQuestions[pendingQuestions.length - 1],
+        });
         this.closeHandler();
       },
     },

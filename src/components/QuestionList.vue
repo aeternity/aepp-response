@@ -30,7 +30,7 @@
         sorts: {
           newest: (a, b) => b.createdAt - a.createdAt,
           'highest support': (a, b) => b.amount - a.amount,
-          'most supporters': (a, b) => b.supportersCount - a.supportersCount,
+          'most supporters': (a, b) => b.supporterCount - a.supporterCount,
         },
       };
     },
@@ -39,8 +39,8 @@
         return this.$route.params.sort || Object.keys(this.sorts)[0];
       },
       questions() {
-        const questions = this.$store.state.response.questions;
-        return Object.keys(questions).map(id => ({ ...questions[id], id }))
+        const { questions, pendingQuestions } = this.$store.state.response;
+        return [...Object.values(questions), ...pendingQuestions.filter(q => typeof q !== 'string')]
           .sort(this.sorts[this.currentSort]);
       },
     },

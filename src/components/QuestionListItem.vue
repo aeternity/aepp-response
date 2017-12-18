@@ -1,13 +1,13 @@
 <template>
   <ae-panel
-    :to="{ name: 'question', params: { id: question.id || question.ipfsHash } }"
+    :to="{ name: 'question', params: question }"
     :ratioBottom="(Date.now() - question.createdAt) / (question.deadlineAt - question.createdAt)"
   >
     <div class="question-list-item">
       <ae-category v-if="question.tweetId">answered</ae-category>
-      <img :src="`https://twitter.com/${question.twitter}/profile_image?size=original`" />
+      <img :src="question.twitterUser.imageUrl" />
       <div class="content">
-        <h2>@{{question.twitter}}, {{question.title}}</h2>
+        <h2>@{{question.twitterUser.screenName}}, {{question.title}}</h2>
         <text-muted v-if="question.body">{{question.body}}</text-muted>
         <question-statistic :question="question" />
       </div>

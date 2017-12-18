@@ -8,7 +8,7 @@ Vue.use(Router);
 export default new Router({
   mode: 'history',
   routes: [
-    { path: '/question/:id', name: 'question', component: QuestionDetail, props: true },
+    { path: '/question/:id/:status?', name: 'question', component: QuestionDetail, props: true },
     { path: '/:sort?', name: 'question-list', component: QuestionList, props: true },
   ],
 });

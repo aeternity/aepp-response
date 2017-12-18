@@ -2,9 +2,9 @@
   <ae-panel v-if="question" :closeHandler="close">
     <div class="question-detail">
       <div class="twitter-account">
-        <a :href="`https://twitter.com/${question.twitter}`" target="_blank">
-          <img :src="`https://twitter.com/${question.twitter}/profile_image?size=original`" />
-          @{{question.twitter}}
+        <a :href="`https://twitter.com/${question.twitterUser.screenName}`" target="_blank">
+          <img :src="question.twitterUser.imageUrl" />
+          @{{question.twitterUser.screenName}}
         </a>
       </div>
       <h2 class="title">“{{question.title}}"</h2>
@@ -25,19 +25,19 @@
       <question-statistic largeFont :question="question" />
       <div class="will-be-donated">
         <template v-if="!question.tweetId">Will be</template> donated to
-        <a :href="foundation.url" target="_blank">{{foundation.name}}</a>
+        <a :href="question.foundation.url" target="_blank">{{question.foundation.name}}</a>
       </div>
       <ae-hr />
       <h2 class="highest-supporters">Highest supporters</h2>
       <table>
         <tr v-for="supporter in question.highestSupporters">
-          <td>{{supporter.address.slice(0, 8)}}...</td>
+          <td>{{supporter.account.slice(0, 8)}}...</td>
           <td><text-muted>{{supporter.lastSupportAt | moment('calendar')}}</text-muted></td>
           <td>{{supporter.amount}}&nbsp;Æ</td>
         </tr>
       </table>
       <template v-if="!question.tweetId">
-        <ae-content-button @click="showSupportModal">
+        <ae-content-button @click="showSupportModal" :disabled="status === 'unsynced'">
           <img :src="require(`emoji-datasource-apple/img/apple/64/1f44f.png`)" />
           Support Question
         </ae-content-button>
@@ -46,7 +46,7 @@
         </div>
         <ae-hr />
         <div class="are-you">
-          Are you @{{question.twitter}} and you want to respond to this question, so we can
+          Are you @{{question.twitterUser.screenName}} and you want to respond to this question, so we can
           donate the full amount to a good cause? Answer the question with a reply on
           Twitter with a short video of you. Easily reply with this button:
         </div>
@@ -61,6 +61,7 @@
 </template>
 
 <script>
+  import { mapState } from 'vuex';
   import { AePanel, AeHr, AeHrProgressBar } from 'aepp-components-davidyuk';
   import { Tweet } from 'vue-tweet-embed';
   import TextMuted from './TextMuted';
@@ -68,29 +69,28 @@
   import AeContentButton from './AeContentButton';
 
   export default {
-    props: ['id'],
+    props: {
+      id: String,
+      status: String,
+    },
     components: {
       AePanel, AeHr, AeHrProgressBar, TextMuted, QuestionStatistic, AeContentButton, Tweet,
     },
-    data() {
-      return { supportersVisible: false };
-    },
-    computed: {
-      question() {
-        if (!this.id.startsWith('0x')) {
-          const q = Object.values(this.$store.state.response.questions)
-            .find(({ ipfsHash }) => ipfsHash === this.id);
-          if (q && q.id.startsWith('0x') && this.$store.state.response.questions[q.id]) {
-            this.$router.replace({ name: 'question', params: { id: q.id } });
+    computed: mapState({
+      question(state) {
+        let q;
+        if (this.status === 'unsynced') {
+          q = state.response.pendingQuestions[this.id];
+          if (typeof q === 'string') {
+            q = state.response.questions[q];
+            this.$router.replace({ name: 'question', params: q });
           }
-          return q;
+        } else {
+          q = state.response.questions[this.id];
         }
-        return this.$store.state.response.questions[this.id];
+        return q;
       },
-      foundation() {
-        return this.$store.state.response.foundations[this.question.foundationId];
-      },
-    },
+    }),
     methods: {
       close() {
         this.$router.push({
