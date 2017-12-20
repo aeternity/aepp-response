@@ -18,10 +18,7 @@
         :id="question.tweetId"
         :options="{ conversation: 'none', width: 550, align: 'center' }"
       />
-      <ae-hr-progress-bar
-        v-else
-        :ratio="(Date.now() - question.createdAt) / (question.deadlineAt - question.createdAt)"
-      />
+      <ae-hr v-else />
       <question-statistic largeFont :question="question" />
       <div class="will-be-donated">
         <template v-if="!question.tweetId">Will be</template> donated to
