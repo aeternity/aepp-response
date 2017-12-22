@@ -1,7 +1,7 @@
 <template>
   <ae-panel
     :to="{ name: 'question', params: question }"
-    :ratioBottom="(Date.now() - question.createdAt) / (question.deadlineAt - question.createdAt)"
+    :ratioBottom="1"
   >
     <div class="question-list-item">
       <ae-category v-if="question.tweetId">answered</ae-category>
