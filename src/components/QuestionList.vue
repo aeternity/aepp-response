@@ -22,7 +22,7 @@
 
     <question-list-item
       v-for="question in questions"
-      :key="question.id"
+      :key="question.status + question.id"
       :question="question"
     />
   </div>
