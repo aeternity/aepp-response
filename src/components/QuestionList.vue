@@ -55,8 +55,8 @@
         return this.$route.params.filter || Object.keys(this.filters)[0];
       },
       questions() {
-        const { questions, pendingQuestions } = this.$store.state.response;
-        return [...Object.values(questions), ...pendingQuestions.filter(q => typeof q !== 'string')]
+        const { questions, localQuestions } = this.$store.state.response;
+        return [...Object.values(questions), ...localQuestions.filter(q => typeof q !== 'string')]
           .filter(this.filters[this.currentFilter])
           .sort(this.sorts[this.currentSort]);
       },

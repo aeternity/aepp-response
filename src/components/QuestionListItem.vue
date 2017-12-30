@@ -9,6 +9,7 @@
       <div class="content">
         <h2>@{{question.twitterUser.screenName}}, {{question.title}}</h2>
         <text-muted v-if="question.body">{{question.body}}</text-muted>
+        <question-status :question="question" hide-tweet-status />
         <question-statistic :question="question" />
       </div>
       <div class="arrow">
@@ -22,9 +23,10 @@
   import { AePanel, AeCategory } from 'aepp-components-davidyuk';
   import TextMuted from './TextMuted';
   import QuestionStatistic from './QuestionStatistic';
+  import QuestionStatus from './QuestionStatus';
 
   export default {
-    components: { AePanel, AeCategory, TextMuted, QuestionStatistic },
+    components: { AePanel, AeCategory, TextMuted, QuestionStatistic, QuestionStatus },
     props: ['question'],
   };
 </script>

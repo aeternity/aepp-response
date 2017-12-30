@@ -19,6 +19,8 @@
         :options="{ conversation: 'none', width: 550, align: 'center' }"
       />
       <ae-hr v-else />
+      <question-status :question="question" />
+      <ae-hr />
       <question-statistic largeFont :question="question" />
       <div class="will-be-donated">
         <template v-if="!question.answerTweetId">Will be</template> donated to
@@ -63,6 +65,7 @@
   import { Tweet } from 'vue-tweet-embed';
   import TextMuted from './TextMuted';
   import QuestionStatistic from './QuestionStatistic';
+  import QuestionStatus from './QuestionStatus';
   import AeContentButton from './AeContentButton';
 
   export default {
@@ -71,13 +74,20 @@
       status: String,
     },
     components: {
-      AePanel, AeHr, AeHrProgressBar, TextMuted, QuestionStatistic, AeContentButton, Tweet,
+      AePanel,
+      AeHr,
+      AeHrProgressBar,
+      TextMuted,
+      QuestionStatistic,
+      QuestionStatus,
+      AeContentButton,
+      Tweet,
     },
     computed: mapState({
       question(state) {
         let q;
-        if (this.status === 'unsynced') {
-          q = state.response.pendingQuestions[this.id];
+        if (this.status) {
+          q = state.response.localQuestions[this.id];
           if (typeof q === 'string') {
             q = state.response.questions[q];
             this.$router.replace({ name: 'question', params: q });

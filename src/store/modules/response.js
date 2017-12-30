@@ -26,6 +26,7 @@ const backend = async (name, params) => {
 const decimals = 18;
 const wrapSend = sendPromiEvent => new Promise((resolve, reject) =>
   sendPromiEvent.on('transactionHash', resolve).on('error', reject));
+let newBlockInterval;
 
 ipfs.addJSONAsync = Bluebird.promisify(ipfs.addJSON);
 ipfs.catJSONAsync = Bluebird.promisify(ipfs.catJSON);
@@ -46,7 +47,7 @@ export default {
         url: 'http://example.com/',
       },
     },
-    pendingQuestions: [],
+    localQuestions: [],
     questions: {},
     twitterUsers: {},
     userSearchResults: {},
@@ -69,19 +70,20 @@ export default {
       state.lastQuestionListParams = params;
     },
     setQuestion(state, question) {
-      if (question.id) {
-        const p = q => _.pick(q,
-          ['twitterUser', 'author', 'title', 'body', 'deadlineAt', 'foundation']);
-        const idx = state.pendingQuestions.findIndex(q => _.isEqual(p(q), p(question)));
-        if (idx > -1) Vue.set(state.pendingQuestions, idx, question.id);
-        Vue.set(state.questions, question.id, question);
-      } else {
-        state.pendingQuestions.push({
-          id: String(state.pendingQuestions.length),
-          status: 'unsynced',
-          ...question,
-        });
-      }
+      Vue.set(state.questions, question.id, question);
+    },
+    addLocalQuestion(state, question) {
+      state.localQuestions.push({
+        id: String(state.localQuestions.length),
+        status: 'unsynced',
+        ...question,
+      });
+    },
+    linkLocalQuestion(state, { localQuestionId, questionId }) {
+      Vue.set(state.localQuestions, localQuestionId, questionId);
+    },
+    setLocalQuestionStatus(state, { localQuestionId, status }) {
+      state.localQuestions[localQuestionId].status = status;
     },
     supportQuestion(state, { questionId, supporterAccount, amount, createdAt }) {
       const { highestSupporters } = state.questions[questionId];
@@ -117,12 +119,13 @@ export default {
         }
 
         const networkId = await web3.eth.net.getId();
+        newBlockInterval = (networkId === 1 ? 15 : 5) * 1000;
         responseAddress = Response.networks[networkId].address;
         response = new web3.eth.Contract(Response.abi, responseAddress);
         token = new web3.eth.Contract(AETokenMeta.abi, AETokenMeta.networks[networkId].address);
 
         dispatch('syncQuestions');
-        setInterval(() => dispatch('syncQuestions'), 30 * 1000);
+        setInterval(() => dispatch('syncQuestions'), newBlockInterval);
 
         const accountPolling = async () => {
           const accounts = await web3.eth.getAccounts();
@@ -139,7 +142,7 @@ export default {
       }
       return state.twitterUsers[userId];
     },
-    async syncQuestions({ state: { questions, foundations }, commit, dispatch }) {
+    async syncQuestions({ state: { questions, localQuestions, foundations }, commit, dispatch }) {
       const questionCount = +await response.methods.questionCount().call();
       await Promise.all(_.times(questionCount, async (idx) => {
         const {
@@ -176,7 +179,20 @@ export default {
               }))
               .filter(s => s.amount);
         }
-        if (!_.isEqual(oldQuestion, newQuestion)) commit('setQuestion', newQuestion);
+        if (!_.isEqual(oldQuestion, newQuestion)) {
+          const p = q => _.pick(q,
+            ['twitterUser', 'author', 'title', 'body', 'deadlineAt', 'foundation']);
+          const i = localQuestions.findIndex(q => _.isEqual(p(q), p(newQuestion)));
+          if (i > -1) {
+            commit('linkLocalQuestion', { localQuestionId: i, questionId: newQuestion.id });
+            dispatch('setAlert', {
+              text: '✓ Your question was published',
+              autoClose: true,
+            });
+          }
+
+          commit('setQuestion', newQuestion);
+        }
       }));
     },
     setAlert({ commit }, options) {
@@ -208,11 +224,7 @@ export default {
             value: await response.methods.backendFee().call(),
             from: state.account,
           }));
-      dispatch('setAlert', {
-        text: '✓ Your question was send',
-        autoClose: true,
-      });
-      commit('setQuestion', {
+      commit('addLocalQuestion', {
         twitterUser: state.twitterUsers[twitterUserId],
         amount,
         highestSupporters: [{ account: state.account, amount, lastSupportAt: new Date() }],
@@ -226,6 +238,15 @@ export default {
         answerTweetId: 0,
         foundation: state.foundations[foundationId],
       });
+      const localQuestionId = state.localQuestions.length - 1;
+      setTimeout(() => {
+        if (typeof state.localQuestions[localQuestionId] === 'object') {
+          commit('setLocalQuestionStatus', { localQuestionId, status: 'failed' });
+          dispatch('setAlert', {
+            text: 'Something went wrong while publishing your question',
+          });
+        }
+      }, newBlockInterval * 2.5);
     },
     async supportQuestion({ state, commit, dispatch }, { questionId, amount }) {
       await wrapSend(

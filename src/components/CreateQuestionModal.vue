@@ -159,10 +159,10 @@
           twitterUserId, title, body, amount, foundationId, deadlineAt: new Date(deadlineAt),
         });
         Object.assign(this.$data, this.$options.data());
-        const { pendingQuestions } = this.$store.state.response;
+        const { localQuestions } = this.$store.state.response;
         this.$router.push({
           name: 'question',
-          params: pendingQuestions[pendingQuestions.length - 1],
+          params: localQuestions[localQuestions.length - 1],
         });
         this.closeHandler();
       },
