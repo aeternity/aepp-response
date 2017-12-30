@@ -4,7 +4,7 @@
     :ratioBottom="1"
   >
     <div class="question-list-item">
-      <ae-category v-if="question.tweetId">answered</ae-category>
+      <ae-category v-if="question.answerTweetId">answered</ae-category>
       <img :src="question.twitterUser.imageUrl" />
       <div class="content">
         <h2>@{{question.twitterUser.screenName}}, {{question.title}}</h2>

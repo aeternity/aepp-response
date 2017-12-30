@@ -13,15 +13,15 @@
         Asked by <span>{{question.author.slice(0, 8)}}...</span>
       </div>
       <tweet
-        v-if="question.tweetId"
+        v-if="question.answerTweetId"
         class="tweet"
-        :id="question.tweetId"
+        :id="question.answerTweetId"
         :options="{ conversation: 'none', width: 550, align: 'center' }"
       />
       <ae-hr v-else />
       <question-statistic largeFont :question="question" />
       <div class="will-be-donated">
-        <template v-if="!question.tweetId">Will be</template> donated to
+        <template v-if="!question.answerTweetId">Will be</template> donated to
         <a :href="question.foundation.url" target="_blank">{{question.foundation.name}}</a>
       </div>
       <ae-hr />
@@ -33,7 +33,7 @@
           <td>{{supporter.amount}}&nbsp;Æ</td>
         </tr>
       </table>
-      <template v-if="!question.tweetId">
+      <template v-if="!question.answerTweetId">
         <ae-content-button @click="showSupportModal" :disabled="status === 'unsynced'">
           <img :src="require(`emoji-datasource-apple/img/apple/64/1f44f.png`)" />
           Support Question

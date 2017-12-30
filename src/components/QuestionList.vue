@@ -42,8 +42,8 @@
         },
         filters: {
           all: () => true,
-          unanswered: a => !a.tweetId,
-          answered: a => !!a.tweetId,
+          unanswered: a => !a.answerTweetId,
+          answered: a => !!a.answerTweetId,
         },
       };
     },

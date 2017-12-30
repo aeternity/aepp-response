@@ -24,6 +24,8 @@ const backend = async (name, params) => {
   return (await fetch(`https://stage-response.aepps.com/${name}?${query}`)).json();
 };
 const decimals = 18;
+const wrapSend = sendPromiEvent => new Promise((resolve, reject) =>
+  sendPromiEvent.on('transactionHash', resolve).on('error', reject));
 
 ipfs.addJSONAsync = Bluebird.promisify(ipfs.addJSON);
 ipfs.catJSONAsync = Bluebird.promisify(ipfs.catJSON);
@@ -142,14 +144,15 @@ export default {
       await Promise.all(_.times(questionCount, async (idx) => {
         const {
           twitterUserId, content, author, foundation,
-          createdAt, deadlineAt, tweetId, supporterCount, amount,
+          createdAt, deadlineAt, questionTweetId, answerTweetId, supporterCount, amount,
         } = { ...await response.methods.questions(idx).call() };
         const oldQuestion = questions[idx];
         const newQuestion = {
           ...oldQuestion,
           amount: +(new BigNumber(amount)).shift(-decimals),
           supporterCount: +supporterCount,
-          tweetId: tweetId === '0' ? 0 : tweetId,
+          questionTweetId: questionTweetId === '0' ? 0 : questionTweetId,
+          answerTweetId: answerTweetId === '0' ? 0 : answerTweetId,
         };
         if (!oldQuestion) {
           Object.assign(newQuestion, {
@@ -185,24 +188,26 @@ export default {
     async createQuestion({ state, commit, dispatch }, {
       twitterUserId, title, body, amount, foundationId, deadlineAt,
     }) {
-      const ipfsHash = await ipfs.addJSONAsync({ title, body });
-      const encodeParameters = web3.eth.abi.encodeParameters.bind(web3.eth.abi);
-      const encodeString = string => web3.eth.abi.encodeParameter('string', string).slice(66);
-      const multiHashEncoded = encodeString(ipfsHash);
-      const length = (multiHashEncoded.length / 2) + (32 * 3);
-      const bytes = [
-        encodeParameters(['uint', 'uint', 'uint'], [32 * 4, length, twitterUserId]),
-        multiHashEncoded,
-        encodeParameters(['address', 'uint'],
-          [foundationId, Math.floor(deadlineAt / 1000)]).slice(2),
-      ].join('');
-      await new Promise((resolve, reject) =>
-        token.methods.approveAndCall(
-          responseAddress,
-          (new BigNumber(amount)).shift(decimals),
-          bytes,
-        ).send({ from: state.account })
-          .on('transactionHash', resolve).on('error', reject));
+      const absoluteAmount = (new BigNumber(amount)).shift(decimals);
+      const allowance = await token.methods.allowance(state.account, responseAddress).call();
+      if (absoluteAmount.greaterThan(allowance)) {
+        await wrapSend(
+          token.methods
+            .approve(responseAddress, absoluteAmount)
+            .send({ from: state.account }));
+      }
+      await wrapSend(
+        response.methods.createQuestion(
+          twitterUserId,
+          await ipfs.addJSONAsync({ title, body }),
+          foundationId,
+          Math.floor(deadlineAt / 1000),
+          absoluteAmount,
+        )
+          .send({
+            value: await response.methods.backendFee().call(),
+            from: state.account,
+          }));
       dispatch('setAlert', {
         text: '✓ Your question was send',
         autoClose: true,
@@ -217,18 +222,19 @@ export default {
         author: state.account,
         createdAt: new Date(),
         deadlineAt,
-        tweetId: 0,
+        questionTweetId: 0,
+        answerTweetId: 0,
         foundation: state.foundations[foundationId],
       });
     },
     async supportQuestion({ state, commit, dispatch }, { questionId, amount }) {
-      await new Promise((resolve, reject) =>
+      await wrapSend(
         token.methods.approveAndCall(
           responseAddress,
           (new BigNumber(amount)).shift(decimals),
           web3.eth.abi.encodeParameters(['uint', 'uint', 'uint'], [32 * 4, 32, questionId]),
-        ).send({ from: state.account })
-          .on('transactionHash', resolve).on('error', reject));
+        )
+          .send({ from: state.account }));
       dispatch('setAlert', {
         text: '✓ Your support was send',
         autoClose: true,
