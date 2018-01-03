@@ -1,5 +1,9 @@
 <template>
-  <div>
+  <div
+    v-infinite-scroll="loadMore"
+    infinite-scroll-disabled="scrollDisabled"
+    infinite-scroll-immediate-check="false"
+  >
     <ae-filter-list>
       <ae-filter-item
         v-for="s in Object.keys(sorts)"
@@ -25,22 +29,30 @@
       :key="question.status + question.id"
       :question="question"
     />
+
+    <div class="loader">
+      <ae-loader v-if="loading" />
+    </div>
   </div>
 </template>
 
 <script>
   import { mapState } from 'vuex';
+  import infiniteScroll from 'vue-infinite-scroll';
   import { AeFilterList, AeFilterItem, AeFilterSeparator } from 'aepp-components-davidyuk';
+  import AeLoader from './AeLoader';
   import QuestionListItem from './QuestionListItem';
 
   export default {
-    components: { AeFilterList, AeFilterItem, AeFilterSeparator, QuestionListItem },
+    components: { AeFilterList, AeFilterItem, AeFilterSeparator, AeLoader, QuestionListItem },
+    directives: { infiniteScroll },
     data() {
       return {
         sorts: {
-          newest: (a, b) => b.createdAt - a.createdAt,
-          'highest support': (a, b) => b.amount - a.amount,
+          newest: (a, b) => b.createdAt - a.createdAt || b.id - a.id,
+          'highest support': (a, b) => b.amount - a.amount || b.id - a.id,
         },
+        loading: false,
       };
     },
     computed: {
@@ -60,6 +72,9 @@
             .filter(this.filters[this.currentFilter])
             .sort(this.sorts[this.currentSort]);
         },
+        scrollDisabled({ response: { firstQuestionId } }) {
+          return this.loading || !firstQuestionId;
+        },
       }),
       currentSort() {
         return this.$route.params.sort || Object.keys(this.sorts)[0];
@@ -68,5 +83,18 @@
         return this.$route.params.filter || Object.keys(this.filters)[0];
       },
     },
+    methods: {
+      async loadMore() {
+        this.loading = true;
+        await this.$store.dispatch('loadMoreQuestions');
+        this.loading = false;
+      },
+    },
   };
 </script>
+
+<style lang="scss" scoped>
+  .loader {
+    text-align: center;
+  }
+</style>

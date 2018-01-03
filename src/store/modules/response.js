@@ -112,6 +112,9 @@ export default {
       accounts.forEach(account => Vue.set(state.twitterUsers, account.id, account));
       Vue.set(state.userSearchResults, query, accounts.map(({ id }) => id));
     },
+    setFirstQuestionId(state, value) {
+      Vue.set(state, 'firstQuestionId', Math.max(value, 0));
+    },
   },
 
   actions: {
@@ -159,9 +162,13 @@ export default {
     },
     async syncQuestions({ state, commit, dispatch }) {
       const questionCount = +await response.methods.questionCount().call();
+      if (state.firstQuestionId === undefined) {
+        commit('setFirstQuestionId', questionCount - 10);
+      }
       const unShiftAmount = amount => +(new BigNumber(amount)).shift(-decimals);
       const secondsToDate = seconds => new Date(seconds * 1000);
-      await Promise.all(_.times(questionCount, async (idx) => {
+      await Promise.all(_.times(questionCount - state.firstQuestionId, async (t) => {
+        const idx = t + state.firstQuestionId;
         const {
           twitterUserId, content, author, foundation,
           createdAt, deadlineAt, questionTweetId, answerTweetId, supporterCount, amount,
@@ -226,6 +233,10 @@ export default {
           commit('setQuestion', newQuestion);
         }
       }));
+    },
+    async loadMoreQuestions({ state, commit, dispatch }) {
+      commit('setFirstQuestionId', state.firstQuestionId - 5);
+      await dispatch('syncQuestions');
     },
     setAlert({ commit }, options) {
       window.scrollTo(0, 0);

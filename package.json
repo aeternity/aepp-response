@@ -27,6 +27,7 @@
     "vee-validate": "^2.0.0-rc.21",
     "vue": "^2.4.2",
     "vue-focus": "^2.1.0",
+    "vue-infinite-scroll": "^2.0.2",
     "vue-moment": "^2.2.0",
     "vue-router": "^3.0.0",
     "vue-tweet-embed": "^2.0.0",
