@@ -29,6 +29,7 @@
 </template>
 
 <script>
+  import { mapState } from 'vuex';
   import { AeFilterList, AeFilterItem, AeFilterSeparator } from 'aepp-components-davidyuk';
   import QuestionListItem from './QuestionListItem';
 
@@ -40,25 +41,31 @@
           newest: (a, b) => b.createdAt - a.createdAt,
           'highest support': (a, b) => b.amount - a.amount,
         },
-        filters: {
-          all: () => true,
-          unanswered: a => !a.answerTweetId,
-          answered: a => !!a.answerTweetId,
-        },
       };
     },
     computed: {
+      ...mapState({
+        filters: (state) => {
+          const isRevertable = question => question.stage === 'revertable';
+          return {
+            all: () => true,
+            unanswered: a => !a.answerTweetId,
+            answered: a => !!a.answerTweetId,
+            ...Object.values(state.response.questions).find(isRevertable)
+              ? { reclaim: isRevertable } : {},
+          };
+        },
+        questions({ response: { questions, localQuestions } }) {
+          return [...Object.values(questions), ...localQuestions.filter(q => typeof q !== 'string')]
+            .filter(this.filters[this.currentFilter])
+            .sort(this.sorts[this.currentSort]);
+        },
+      }),
       currentSort() {
         return this.$route.params.sort || Object.keys(this.sorts)[0];
       },
       currentFilter() {
         return this.$route.params.filter || Object.keys(this.filters)[0];
-      },
-      questions() {
-        const { questions, localQuestions } = this.$store.state.response;
-        return [...Object.values(questions), ...localQuestions.filter(q => typeof q !== 'string')]
-          .filter(this.filters[this.currentFilter])
-          .sort(this.sorts[this.currentSort]);
       },
     },
   };

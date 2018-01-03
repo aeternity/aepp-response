@@ -24,7 +24,7 @@
     },
     computed: {
       daysLeft() {
-        return Math.floor((this.question.deadlineAt - Date.now()) / 1000 / 60 / 60 / 24);
+        return Math.floor(Math.max(this.question.deadlineAt - Date.now(), 0) / 1000 / 60 / 60 / 24);
       },
     },
   };

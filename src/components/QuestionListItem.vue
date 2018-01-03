@@ -4,7 +4,7 @@
     :ratioBottom="1"
   >
     <div class="question-list-item">
-      <ae-category v-if="question.answerTweetId">answered</ae-category>
+      <ae-category v-if="label" :class="label.type">{{label.text}}</ae-category>
       <img :src="question.twitterUser.imageUrl" />
       <div class="content">
         <h2>@{{question.twitterUser.screenName}}, {{question.title}}</h2>
@@ -28,6 +28,16 @@
   export default {
     components: { AePanel, AeCategory, TextMuted, QuestionStatistic, QuestionStatus },
     props: ['question'],
+    computed: {
+      label() {
+        switch (this.question.stage) {
+          case 'closed': return { text: 'closed' };
+          case 'revertable': return { text: 'reclaim founds', type: 'branded' };
+          case 'answered': return { text: 'answered' };
+          default: return null;
+        }
+      },
+    },
   };
 </script>
 
@@ -45,6 +55,10 @@
       right: 0;
       font-size: 12px;
       padding: 0 9px;
+
+      &.branded {
+        background-color: $maegenta;
+      }
     }
 
     img {

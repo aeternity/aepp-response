@@ -15,9 +15,6 @@ const ipfs = new IPFS({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' })
 const idManager = new IdManagerProvider({
   skipSecurity: process.env.NODE_ENV === 'development',
 });
-let token;
-let response;
-let responseAddress;
 const backend = async (name, params) => {
   const query = Object.keys(params)
     .reduce((p, n) => `${p}${p ? '&' : ''}${n}=${encodeURIComponent(params[n])}`, '');
@@ -26,6 +23,17 @@ const backend = async (name, params) => {
 const decimals = 18;
 const wrapSend = sendPromiEvent => new Promise((resolve, reject) =>
   sendPromiEvent.on('transactionHash', resolve).on('error', reject));
+const getQuestionStage = (question, account) => {
+  if (question.answerTweetId) return 'answered';
+  if (question.deadlineAt < Date.now()) {
+    return question.supporterAmount[account] && !+question.supportRevertedAt[account]
+      ? 'revertable' : 'closed';
+  }
+  return 'opened';
+};
+let token;
+let response;
+let responseAddress;
 let newBlockInterval;
 
 ipfs.addJSONAsync = Bluebird.promisify(ipfs.addJSON);
@@ -76,6 +84,7 @@ export default {
       state.localQuestions.push({
         id: String(state.localQuestions.length),
         status: 'unsynced',
+        stage: getQuestionStage(question, state.account),
         ...question,
       });
     },
@@ -130,7 +139,13 @@ export default {
         const accountPolling = async () => {
           const accounts = await web3.eth.getAccounts();
           const account = accounts[0] || null;
-          if (account !== state.account) commit('setAccount', account);
+          if (account !== state.account) {
+            commit('setAccount', account);
+            const q = Object.values(state.questions)[0];
+            if (q && q.supporterAmount[account] === undefined) {
+              dispatch('syncQuestions');
+            }
+          }
           setTimeout(accountPolling, 500);
         };
         if (localProvider) await accountPolling();
@@ -142,17 +157,21 @@ export default {
       }
       return state.twitterUsers[userId];
     },
-    async syncQuestions({ state: { questions, localQuestions, foundations }, commit, dispatch }) {
+    async syncQuestions({ state, commit, dispatch }) {
       const questionCount = +await response.methods.questionCount().call();
+      const unShiftAmount = amount => +(new BigNumber(amount)).shift(-decimals);
+      const secondsToDate = seconds => new Date(seconds * 1000);
       await Promise.all(_.times(questionCount, async (idx) => {
         const {
           twitterUserId, content, author, foundation,
           createdAt, deadlineAt, questionTweetId, answerTweetId, supporterCount, amount,
         } = { ...await response.methods.questions(idx).call() };
-        const oldQuestion = questions[idx];
+        const oldQuestion = state.questions[idx];
         const newQuestion = {
-          ...oldQuestion,
-          amount: +(new BigNumber(amount)).shift(-decimals),
+          supporterAmount: {},
+          supportRevertedAt: {},
+          ..._.cloneDeep(oldQuestion),
+          amount: unShiftAmount(amount),
           supporterCount: +supporterCount,
           questionTweetId: questionTweetId === '0' ? 0 : questionTweetId,
           answerTweetId: answerTweetId === '0' ? 0 : answerTweetId,
@@ -163,12 +182,13 @@ export default {
             twitterUser: await dispatch('getUser', twitterUserId),
             ...await ipfs.catJSONAsync(content),
             author,
-            createdAt: new Date(createdAt * 1000),
-            deadlineAt: new Date(deadlineAt * 1000),
-            foundation: foundations[foundation],
+            createdAt: secondsToDate(createdAt),
+            deadlineAt: secondsToDate(deadlineAt),
+            foundation: state.foundations[foundation],
           });
         }
-        if (newQuestion.amount !== (oldQuestion && oldQuestion.amount)) {
+        const amountDiffers = newQuestion.amount !== (oldQuestion && oldQuestion.amount);
+        if (amountDiffers) {
           newQuestion.highestSupporters =
             (await Promise.all(_.times(5, n => response.methods.highestSupporter(idx, n).call())))
               .map(Object.values)
@@ -179,10 +199,22 @@ export default {
               }))
               .filter(s => s.amount);
         }
+        if (
+          state.account &&
+          (newQuestion.supporterAmount[state.account] === undefined || amountDiffers)
+        ) {
+          newQuestion.supporterAmount[state.account] =
+            unShiftAmount(await response.methods.supporterAmount(idx, state.account).call());
+        }
+        if (newQuestion.deadlineAt < Date.now() && newQuestion.supporterAmount[state.account]) {
+          newQuestion.supportRevertedAt[state.account] =
+            secondsToDate(await response.methods.supportRevertedAt(idx, state.account).call());
+        }
+        newQuestion.stage = getQuestionStage(newQuestion, state.account);
         if (!_.isEqual(oldQuestion, newQuestion)) {
           const p = q => _.pick(q,
             ['twitterUser', 'author', 'title', 'body', 'deadlineAt', 'foundation']);
-          const i = localQuestions.findIndex(q => _.isEqual(p(q), p(newQuestion)));
+          const i = state.localQuestions.findIndex(q => _.isEqual(p(q), p(newQuestion)));
           if (i > -1) {
             commit('linkLocalQuestion', { localQuestionId: i, questionId: newQuestion.id });
             dispatch('setAlert', {
@@ -237,6 +269,8 @@ export default {
         questionTweetId: 0,
         answerTweetId: 0,
         foundation: state.foundations[foundationId],
+        supporterAmount: { [state.account]: amount },
+        supportRevertedAt: {},
       });
       const localQuestionId = state.localQuestions.length - 1;
       setTimeout(() => {
@@ -266,6 +300,9 @@ export default {
         amount,
         createdAt: new Date(),
       });
+    },
+    async revertSupport({ state, commit, dispatch }, questionId) {
+      await wrapSend(response.methods.revertSupport(questionId).send({ from: state.account }));
     },
     searchTwitterAccount: _.throttle(async ({ commit, state }, query) => {
       const r = state.userSearchResults[query];

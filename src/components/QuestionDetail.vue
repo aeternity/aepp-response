@@ -1,6 +1,10 @@
 <template>
   <ae-panel v-if="question" :closeHandler="close">
     <div class="question-detail">
+      <div class="centered" v-if="['closed', 'revertable'].includes(question.stage)">
+        This question was not answered in the defined time frame and is closed.
+        Everybody who supported this question can claim his tokens back
+      </div>
       <div class="twitter-account">
         <a :href="`https://twitter.com/${question.twitterUser.screenName}`" target="_blank">
           <img :src="question.twitterUser.imageUrl" />
@@ -13,7 +17,7 @@
         Asked by <span>{{question.author.slice(0, 8)}}...</span>
       </div>
       <tweet
-        v-if="question.answerTweetId"
+        v-if="question.stage === 'answered'"
         class="tweet"
         :id="question.answerTweetId"
         :options="{ conversation: 'none', width: 550, align: 'center' }"
@@ -23,7 +27,7 @@
       <ae-hr />
       <question-statistic largeFont :question="question" />
       <div class="will-be-donated">
-        <template v-if="!question.answerTweetId">Will be</template> donated to
+        {{donatedTo}}
         <a :href="question.foundation.url" target="_blank">{{question.foundation.name}}</a>
       </div>
       <ae-hr />
@@ -35,7 +39,7 @@
           <td>{{supporter.amount}}&nbsp;Æ</td>
         </tr>
       </table>
-      <template v-if="!question.answerTweetId">
+      <template v-if="question.stage === 'opened'">
         <ae-content-button @click="showSupportModal" :disabled="status === 'unsynced'">
           <img :src="require(`emoji-datasource-apple/img/apple/64/1f44f.png`)" />
           Support Question
@@ -44,7 +48,7 @@
           Minimum amount to support: 1&nbsp;Æ
         </div>
         <ae-hr />
-        <div class="are-you">
+        <div class="centered">
           Are you @{{question.twitterUser.screenName}} and you want to respond to this question, so we can
           donate the full amount to a good cause? Answer the question with a reply on
           Twitter with a short video of you. Easily reply with this button:
@@ -53,6 +57,12 @@
           <img :src="require(`emoji-datasource-apple/img/apple/64/270f-fe0f.png`)" />
           Answer on Twitter
         </ae-content-button>
+      </template>
+      <template v-if="['closed', 'revertable'].includes(question.stage)">
+        <ae-content-button @click="revertSupport" :disabled="revertButtonIsDisabled">
+          Claim tokens back
+        </ae-content-button>
+        <div class="secondary">{{revertButtonSecondary}}</div>
       </template>
     </div>
   </ae-panel>
@@ -83,27 +93,68 @@
       AeContentButton,
       Tweet,
     },
-    computed: mapState({
-      question(state) {
-        let q;
-        if (this.status) {
-          q = state.response.localQuestions[this.id];
-          if (typeof q === 'string') {
-            q = state.response.questions[q];
-            this.$router.replace({ name: 'question', params: q });
+    data() {
+      return {
+        revertInProgress: {},
+      };
+    },
+    computed: {
+      ...mapState({
+        question({ response: { localQuestions, questions } }) {
+          let q;
+          if (this.status) {
+            q = localQuestions[this.id];
+            if (typeof q === 'string') {
+              q = questions[q];
+              this.$router.replace({ name: 'question', params: q });
+            }
+          } else {
+            q = questions[this.id];
           }
-        } else {
-          q = state.response.questions[this.id];
+          return q;
+        },
+        account: ({ response: { account } }) => account,
+      }),
+      donatedTo() {
+        switch (this.question.stage) {
+          case 'opened': return 'will be donated to';
+          case 'closed':
+          case 'revertable':
+            return 'was going to donate to';
+          case 'answered': return 'donated to';
+          default: throw new Error('Invalid stage');
         }
-        return q;
       },
-    }),
+      revertButtonSecondary() {
+        const { account, question, revertInProgress } = this;
+        if (!account) return 'You need to activate the AE Identity Manager or Metamask';
+        if (+question.supportRevertedAt[account]) {
+          return [
+            question.supporterAmount[account],
+            'AE were send back to you on',
+            question.supportRevertedAt[account].toLocaleDateString(),
+          ].join(' ');
+        }
+        if (revertInProgress[account]) return 'Tokens returning in progress';
+        if (question.supporterAmount[account]) {
+          return `You supported this question with ${question.supporterAmount[account]} Æ`;
+        }
+        return 'With this account you didn\'t support this question';
+      },
+      revertButtonIsDisabled() {
+        return this.question.stage !== 'revertable' || this.revertInProgress[this.account];
+      },
+    },
     methods: {
       close() {
         this.$router.push({
           name: 'question-list',
           params: this.$store.state.response.lastQuestionListParams,
         });
+      },
+      async revertSupport() {
+        await this.$store.dispatch('revertSupport', this.id);
+        this.$set(this.revertInProgress, this.account, true);
       },
       showSupportModal() {
         this.$store.commit('showSupportModalForQuestion', this.id);
@@ -210,11 +261,12 @@
       }
     }
 
-    .are-you {
+    .centered {
       font-size: 16px;
       line-height: 23px;
       text-align: center;
       color: $black;
+      margin-bottom: 20px;
     }
 
     @media (max-width: $container-width) {
