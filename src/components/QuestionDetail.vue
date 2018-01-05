@@ -66,7 +66,7 @@
       </template>
     </div>
   </ae-panel>
-  <p v-else>This wall question seems to be missing.</p>
+  <p v-else class="centered">This question seems to be missing</p>
 </template>
 
 <script>
@@ -167,6 +167,14 @@
   @import url('https://fonts.googleapis.com/css?family=Roboto+Mono:500');
   @import '~aepp-components-davidyuk/dist/variables.scss';
 
+  .centered {
+    font-size: 16px;
+    line-height: 23px;
+    text-align: center;
+    color: $black;
+    margin-bottom: 20px;
+  }
+
   .question-detail {
     padding: 0 110px;
     overflow: hidden;
@@ -259,14 +267,6 @@
           font-weight: 500;
         }
       }
-    }
-
-    .centered {
-      font-size: 16px;
-      line-height: 23px;
-      text-align: center;
-      color: $black;
-      margin-bottom: 20px;
     }
 
     @media (max-width: $container-width) {
