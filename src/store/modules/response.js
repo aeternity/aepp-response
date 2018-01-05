@@ -291,7 +291,7 @@ export default {
             text: 'Something went wrong while publishing your question',
           });
         }
-      }, newBlockInterval * 2.5);
+      }, newBlockInterval * 4);
     },
     async supportQuestion({ state, commit, dispatch }, { questionId, amount }) {
       await wrapSend(
