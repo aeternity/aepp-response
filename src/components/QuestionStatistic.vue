@@ -3,12 +3,12 @@
     <tr :class="{ 'large-font': largeFont }">
       <td>{{question.amount.toLocaleString('en')}} Æ</td>
       <td>{{question.supporterCount}}</td>
-      <td :class="{ active: !daysLeft }">{{daysLeft}}</td>
+      <td v-if="showDaysLeft" :class="{ active: !daysLeft }">{{daysLeft}}</td>
     </tr>
     <tr>
       <td><text-muted>Supported</text-muted></td>
       <td><text-muted>Supporters</text-muted></td>
-      <td><text-muted>Days&nbsp;left</text-muted></td>
+      <td v-if="showDaysLeft"><text-muted>Days&nbsp;left</text-muted></td>
     </tr>
   </table>
 </template>
@@ -25,6 +25,9 @@
     computed: {
       daysLeft() {
         return Math.floor(Math.max(this.question.deadlineAt - Date.now(), 0) / 1000 / 60 / 60 / 24);
+      },
+      showDaysLeft() {
+        return this.question.stage !== 'answered';
       },
     },
   };
