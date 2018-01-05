@@ -11,7 +11,7 @@
           @{{question.twitterUser.screenName}}
         </a>
       </div>
-      <h2 class="title">“{{question.title}}"</h2>
+      <h2 class="title">{{question.title}}</h2>
       <div class="body" v-if="question.body">{{question.body}}</div>
       <div class="secondary">
         Asked by <span>{{question.author.slice(0, 8)}}...</span>
@@ -20,25 +20,16 @@
         v-if="question.stage === 'answered'"
         class="tweet"
         :id="question.answerTweetId"
-        :options="{ conversation: 'none', width: 550, align: 'center' }"
+        :options="tweetOptions"
       />
       <ae-hr v-else />
       <question-status :question="question" />
-      <ae-hr />
       <question-statistic largeFont :question="question" />
       <div class="will-be-donated">
         {{donatedTo}}
         <a :href="question.foundation.url" target="_blank">{{question.foundation.name}}</a>
       </div>
       <ae-hr />
-      <h2 class="highest-supporters">Highest supporters</h2>
-      <table>
-        <tr v-for="supporter in question.highestSupporters">
-          <td>{{supporter.account.slice(0, 8)}}...</td>
-          <td><text-muted>{{supporter.lastSupportAt | moment('calendar')}}</text-muted></td>
-          <td>{{supporter.amount}}&nbsp;Æ</td>
-        </tr>
-      </table>
       <template v-if="question.stage === 'opened'">
         <ae-content-button @click="showSupportModal" :disabled="status === 'unsynced'">
           <img :src="require(`emoji-datasource-apple/img/apple/64/1f44f.png`)" />
@@ -64,6 +55,20 @@
         </ae-content-button>
         <div class="secondary">{{revertButtonSecondary}}</div>
       </template>
+      <tweet
+        v-if="question.stage !== 'answered' && question.questionTweetId"
+        class="tweet"
+        :id="question.questionTweetId"
+        :options="tweetOptions"
+      />
+      <h2 class="highest-supporters">Highest supporters</h2>
+      <table>
+        <tr v-for="supporter in question.highestSupporters">
+          <td>{{supporter.account.slice(0, 8)}}...</td>
+          <td><text-muted>{{supporter.lastSupportAt | moment('calendar')}}</text-muted></td>
+          <td>{{supporter.amount}}&nbsp;Æ</td>
+        </tr>
+      </table>
     </div>
   </ae-panel>
   <p v-else class="centered">This question seems to be missing</p>
@@ -96,6 +101,7 @@
     data() {
       return {
         revertInProgress: {},
+        tweetOptions: { width: 550, align: 'center' },
       };
     },
     computed: {
@@ -216,7 +222,7 @@
     }
 
     .tweet {
-      margin: 20px 0 40px 0;
+      margin: 40px 0;
     }
 
     .will-be-donated {
