@@ -9,7 +9,7 @@
       <div class="content">
         <h2>@{{question.twitterUser.screenName}}, {{question.title}}</h2>
         <text-muted v-if="question.body">{{question.body}}</text-muted>
-        <question-status :question="question" hide-tweet-status />
+        <question-status :question="question" />
         <question-statistic :question="question" />
       </div>
       <div class="arrow">
