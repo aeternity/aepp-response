@@ -19,7 +19,7 @@
       <tweet
         v-if="question.stage === 'answered'"
         class="tweet"
-        :id="question.answerTweetId"
+        :id="question.tweetId"
         :options="tweetOptions"
       />
       <ae-hr v-else />
@@ -56,9 +56,9 @@
         <div class="secondary">{{revertButtonSecondary}}</div>
       </template>
       <tweet
-        v-if="question.stage !== 'answered' && question.questionTweetId"
+        v-if="question.stage !== 'answered' && question.tweetId"
         class="tweet"
-        :id="question.questionTweetId"
+        :id="question.tweetId"
         :options="tweetOptions"
       />
       <h2 class="highest-supporters">Highest supporters</h2>

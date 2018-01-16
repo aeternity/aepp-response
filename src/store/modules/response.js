@@ -7,6 +7,7 @@ import IdManagerProvider from '@aeternity/id-manager-provider';
 import IPFS from 'ipfs-mini';
 import Bluebird from 'bluebird';
 import BigNumber from 'bignumber.js';
+import bs58 from 'bs58';
 import AETokenMeta from '../../assets/contracts/AEToken.json';
 import Response from '../../assets/contracts/Response.json';
 
@@ -24,7 +25,7 @@ const decimals = 18;
 const wrapSend = sendPromiEvent => new Promise((resolve, reject) =>
   sendPromiEvent.on('transactionHash', resolve).on('error', reject));
 const getQuestionStage = (question, account) => {
-  if (question.answerTweetId) return 'answered';
+  if (question.answered) return 'answered';
   if (question.deadlineAt < Date.now()) {
     return question.supporterAmount[account] && !+question.supportRevertedAt[account]
       ? 'revertable' : 'closed';
@@ -38,6 +39,14 @@ let newBlockInterval;
 
 ipfs.addJSONAsync = Bluebird.promisify(ipfs.addJSON);
 ipfs.catJSONAsync = Bluebird.promisify(ipfs.catJSON);
+
+const getQuestionContent = ipfsHash =>
+  ipfs.catJSONAsync(bs58.encode(Buffer.from(`1220${ipfsHash.slice(2)}`, 'hex')));
+
+const saveQuestionContent = async (content) => {
+  const ipfsHash = await ipfs.addJSONAsync(content);
+  return `0x${Buffer.from(bs58.decode(ipfsHash).slice(2)).toString('hex')}`;
+};
 
 export default {
   state: () => ({
@@ -171,7 +180,7 @@ export default {
         const idx = t + state.firstQuestionId;
         const {
           twitterUserId, content, author, foundation,
-          createdAt, deadlineAt, questionTweetId, answerTweetId, supporterCount, amount,
+          createdAt, tweetId, answered, supporterCount, amount,
         } = { ...await response.methods.questions(idx).call() };
         const oldQuestion = state.questions[idx];
         const newQuestion = {
@@ -180,17 +189,17 @@ export default {
           ..._.cloneDeep(oldQuestion),
           amount: unShiftAmount(amount),
           supporterCount: +supporterCount,
-          questionTweetId: questionTweetId === '0' ? 0 : questionTweetId,
-          answerTweetId: answerTweetId === '0' ? 0 : answerTweetId,
+          tweetId: tweetId === '0' ? 0 : tweetId,
+          answered,
         };
         if (!oldQuestion) {
           Object.assign(newQuestion, {
             id: String(idx),
             twitterUser: await dispatch('getUser', twitterUserId),
-            ...await ipfs.catJSONAsync(content),
+            ...await getQuestionContent(content),
             author,
             createdAt: secondsToDate(createdAt),
-            deadlineAt: secondsToDate(deadlineAt),
+            deadlineAt: secondsToDate(+createdAt + (30 * 24 * 60 * 60)),
             foundation: state.foundations[foundation],
           });
         }
@@ -204,6 +213,7 @@ export default {
                 lastSupportAt: new Date(lastSupportAt * 1000),
                 amount: +(new BigNumber(a)).shift(-decimals),
               }))
+              .sort(({ amount: amountA }, { amount: amountB }) => amountB - amountA)
               .filter(s => s.amount);
         }
         if (
@@ -220,7 +230,7 @@ export default {
         newQuestion.stage = getQuestionStage(newQuestion, state.account);
         if (!_.isEqual(oldQuestion, newQuestion)) {
           const p = q => _.pick(q,
-            ['twitterUser', 'author', 'title', 'body', 'deadlineAt', 'foundation']);
+            ['twitterUser', 'author', 'title', 'body', 'foundation']);
           const i = state.localQuestions.findIndex(q => _.isEqual(p(q), p(newQuestion)));
           if (i > -1) {
             commit('linkLocalQuestion', { localQuestionId: i, questionId: newQuestion.id });
@@ -245,7 +255,7 @@ export default {
       if (autoClose) setTimeout(() => commit('setAlert'), 3000);
     },
     async createQuestion({ state, commit, dispatch }, {
-      twitterUserId, title, body, amount, foundationId, deadlineAt,
+      twitterUserId, title, body, amount, foundationId,
     }) {
       const absoluteAmount = (new BigNumber(amount)).shift(decimals);
       const allowance = await token.methods.allowance(state.account, responseAddress).call();
@@ -258,9 +268,8 @@ export default {
       await wrapSend(
         response.methods.createQuestion(
           twitterUserId,
-          await ipfs.addJSONAsync({ title, body }),
+          await saveQuestionContent({ title, body }),
           foundationId,
-          Math.floor(deadlineAt / 1000),
           absoluteAmount,
         )
           .send({
@@ -276,9 +285,9 @@ export default {
         body,
         author: state.account,
         createdAt: new Date(),
-        deadlineAt,
-        questionTweetId: 0,
-        answerTweetId: 0,
+        deadlineAt: new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)),
+        tweetId: 0,
+        answered: false,
         foundation: state.foundations[foundationId],
         supporterAmount: { [state.account]: amount },
         supportRevertedAt: {},

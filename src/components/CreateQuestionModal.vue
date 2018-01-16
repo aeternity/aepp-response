@@ -83,26 +83,6 @@
         </option>
       </select>
 
-      <label :for="`${_uid}_deadline`">
-        Deadline at
-        <span class="help" :class="{ danger: errors.has('deadline') }">
-          {{errors.first('deadline')}}
-        </span>
-      </label>
-      <text-muted small>
-        If this question won't be answered until this date,
-        you can request your money back.
-      </text-muted>
-      <input
-        type="date"
-        placeholder="Enter deadline"
-        name="deadline"
-        :id="`${_uid}_deadline`"
-        v-model="deadlineAt"
-        v-validate="'required'"
-        :class="{ danger: errors.has('deadline') }"
-      />
-
       <ae-content-button submit :disabled="!account">
         <img :src="require(`emoji-datasource-apple/img/apple/64/1f4b0.png`)" />
         Create Question
@@ -125,15 +105,12 @@
 
   export default {
     data() {
-      const deadlineAt = new Date();
-      deadlineAt.setMonth(deadlineAt.getMonth() + 6);
       return {
         twitterUserId: '',
         title: '',
         body: '',
         amount: 1,
         foundationId: '',
-        deadlineAt: deadlineAt.toISOString().substr(0, 10),
       };
     },
     components: { AeModal, TextMuted, AeAmount, AeContentButton, TwitterAccountInput },
@@ -154,9 +131,9 @@
       async createQuestion() {
         const valid = await this.$validator.validateAll();
         if (!valid) return;
-        const { twitterUserId, title, body, amount, foundationId, deadlineAt } = this;
+        const { twitterUserId, title, body, amount, foundationId } = this;
         await this.$store.dispatch('createQuestion', {
-          twitterUserId, title, body, amount, foundationId, deadlineAt: new Date(deadlineAt),
+          twitterUserId, title, body, amount, foundationId,
         });
         Object.assign(this.$data, this.$options.data());
         const { localQuestions } = this.$store.state.response;

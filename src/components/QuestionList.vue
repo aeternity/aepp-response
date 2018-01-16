@@ -61,8 +61,8 @@
           const isRevertable = question => question.stage === 'revertable';
           return {
             all: () => true,
-            unanswered: a => !a.answerTweetId,
-            answered: a => !!a.answerTweetId,
+            unanswered: question => question.stage !== 'answered',
+            answered: question => question.stage === 'answered',
             ...Object.values(state.response.questions).find(isRevertable)
               ? { reclaim: isRevertable } : {},
           };
