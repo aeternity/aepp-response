@@ -4,7 +4,7 @@
     :ratioBottom="1"
   >
     <div class="question-list-item">
-      <ae-category v-if="label" :class="label.type">{{label.text}}</ae-category>
+      <ae-badge v-if="label" :class="label.type">{{label.text}}</ae-badge>
       <img :src="question.twitterUser.imageUrl" />
       <div class="content">
         <h2>@{{question.twitterUser.screenName}}, {{question.title}}</h2>
@@ -13,20 +13,20 @@
         <question-statistic :question="question" />
       </div>
       <div class="arrow">
-        <i class="fa fa-angle-right" />
+        <ae-icon name="chevron" />
       </div>
     </div>
   </ae-panel>
 </template>
 
 <script>
-  import { AePanel, AeCategory } from 'aepp-components-davidyuk';
+  import { AePanel, AeBadge, AeIcon } from '@aeternity/aepp-components';
   import TextMuted from './TextMuted';
   import QuestionStatistic from './QuestionStatistic';
   import QuestionStatus from './QuestionStatus';
 
   export default {
-    components: { AePanel, AeCategory, TextMuted, QuestionStatistic, QuestionStatus },
+    components: { AePanel, AeBadge, AeIcon, TextMuted, QuestionStatistic, QuestionStatus },
     props: ['question'],
     computed: {
       label() {
@@ -42,14 +42,14 @@
 </script>
 
 <style lang="scss" scoped>
-  @import '~aepp-components-davidyuk/dist/variables.scss';
+  @import '~@aeternity/aepp-components/dist/variables.scss';
 
   .question-list-item {
     display: flex;
     flex-direction: row;
     position: relative;
 
-    .ae-category {
+    .ae-badge {
       position: absolute;
       top: 0;
       right: 0;
@@ -89,12 +89,10 @@
     }
 
     .arrow {
-      font-size: 28px;
       display: flex;
-      margin-left: 10px;
       opacity: .3;
 
-      i {
+      .ae-icon {
         margin: auto;
       }
     }

@@ -34,7 +34,7 @@
 </script>
 
 <style lang="scss" scoped>
-  @import '~aepp-components-davidyuk/dist/variables.scss';
+  @import '~@aeternity/aepp-components/dist/variables.scss';
 
   .question-statistic {
     margin-top: 20px;

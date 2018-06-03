@@ -11,7 +11,7 @@
 </template>
 
 <script>
-  import AeLoader from './AeLoader';
+  import { AeLoader } from '@aeternity/aepp-components';
 
   export default {
     components: { AeLoader },
@@ -22,8 +22,6 @@
 </script>
 
 <style lang="scss" scoped>
-  @import '~aepp-components-davidyuk/dist/variables.scss';
-
   .question-status {
     margin: 10px 0;
 

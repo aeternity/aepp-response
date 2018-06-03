@@ -12,7 +12,7 @@
 </script>
 
 <style lang="scss" scoped>
-  @import '~aepp-components-davidyuk/dist/variables.scss';
+  @import '~@aeternity/aepp-components/dist/variables.scss';
 
   .text-muted {
     color: $grey;

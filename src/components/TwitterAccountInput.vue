@@ -1,17 +1,18 @@
 <template>
   <div class="twitter-account-input">
-    <input
+    <ae-input
+      :id="id"
       v-model="value"
-      @focus="dropDownState = -1"
+      @focus.native="dropDownState = -1"
       @input="handleInput"
-      @keydown.up.prevent="selectSearchResult(true)"
-      @keydown.down.prevent="selectSearchResult(false)"
-      @keydown.enter.prevent="handleEnterPress"
-      @keydown.esc="dropDownState = -2"
-      @blur="handleBlur"
+      @keydown.native.up.prevent="selectSearchResult(true)"
+      @keydown.native.down.prevent="selectSearchResult(false)"
+      @keydown.native.enter.prevent="handleEnterPress"
+      @keydown.native.esc="dropDownState = -2"
+      @blur.native="handleBlur"
       placeholder="Search Twitter account"
     />
-    <div v-if="dropDownState >= -1 && value">
+    <div class="drop-down" v-if="dropDownState >= -1 && value">
       <div class="arrow" />
       <div class="search-results" @mouseover="dropDownState = -1">
         <div class="message" v-if="message">
@@ -38,10 +39,11 @@
 
 <script>
   import { mapState } from 'vuex';
-  import { AeHr } from 'aepp-components-davidyuk';
+  import { AeInput } from '@aeternity/aepp-components';
 
   export default {
-    components: { AeHr },
+    components: { AeInput },
+    props: ['id'],
     data() {
       return {
         value: '',
@@ -111,36 +113,17 @@
 </script>
 
 <style lang="scss" scoped>
-  @import '~aepp-components-davidyuk/dist/variables.scss';
+  @import '~@aeternity/aepp-components/dist/variables.scss';
 
   .twitter-account-input {
     position: relative;
     margin: 10px 0;
 
-    &.danger {
-      input {
-        border-color: $maegenta;
-      }
+    .ae-input {
+      margin-bottom: 0;
     }
 
-    input {
-      display: block;
-      border-radius: 10px;
-      font-size: 16px;
-      border: solid 2px $smoke;
-      background-color: $white;
-      padding: 7px 13px;
-      line-height: 26px;
-      width: 100%;
-      box-sizing: border-box;
-      margin: 0;
-
-      &::placeholder {
-        color: $silver;
-      }
-    }
-
-    > div {
+    .drop-down {
       position: absolute;
       width: 100%;
 

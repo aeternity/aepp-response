@@ -22,14 +22,14 @@
         :id="question.tweetId"
         :options="tweetOptions"
       />
-      <ae-hr v-else />
+      <ae-divider v-else />
       <question-status :question="question" />
       <question-statistic largeFont :question="question" />
       <div class="will-be-donated">
         {{donatedTo}}
         <a :href="question.foundation.url" target="_blank">{{question.foundation.name}}</a>
       </div>
-      <ae-hr />
+      <ae-divider />
       <template v-if="question.stage === 'opened'">
         <ae-content-button @click="showSupportModal" :disabled="status === 'unsynced'">
           <img :src="require(`emoji-datasource-apple/img/apple/64/1f44f.png`)" />
@@ -38,7 +38,7 @@
         <div class="secondary">
           Minimum amount to support: 1&nbsp;Æ
         </div>
-        <ae-hr />
+        <ae-divider />
         <div class="centered">
           Are you @{{question.twitterUser.screenName}} and you want to respond to this question, so we can
           donate the full amount to a good cause? Answer the question with a reply on
@@ -76,7 +76,7 @@
 
 <script>
   import { mapState } from 'vuex';
-  import { AePanel, AeHr, AeHrProgressBar } from 'aepp-components-davidyuk';
+  import { AePanel, AeDivider } from '@aeternity/aepp-components';
   import { Tweet } from 'vue-tweet-embed';
   import TextMuted from './TextMuted';
   import QuestionStatistic from './QuestionStatistic';
@@ -90,8 +90,7 @@
     },
     components: {
       AePanel,
-      AeHr,
-      AeHrProgressBar,
+      AeDivider,
       TextMuted,
       QuestionStatistic,
       QuestionStatus,
@@ -171,7 +170,8 @@
 
 <style lang="scss" scoped>
   @import url('https://fonts.googleapis.com/css?family=Roboto+Mono:500');
-  @import '~aepp-components-davidyuk/dist/variables.scss';
+  @import '~@aeternity/aepp-components/dist/variables.scss';
+  @import '~@aeternity/aepp-components/dist/mixins.scss';
 
   .centered {
     font-size: 16px;
@@ -225,6 +225,11 @@
       margin: 40px 0;
     }
 
+    .ae-divider {
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+
     .will-be-donated {
       font-size: 12px;
       font-weight: 500;
@@ -275,11 +280,11 @@
       }
     }
 
-    @media (max-width: $container-width) {
+    @include belowDesktop {
       padding: 0 55px;
     }
 
-    @media (max-width: $screen-phone) {
+    @include phone {
       padding: 0;
     }
   }
