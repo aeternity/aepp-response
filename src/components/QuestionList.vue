@@ -39,8 +39,9 @@
 <script>
   import { mapState } from 'vuex';
   import infiniteScroll from 'vue-infinite-scroll';
-  import { AeFilterList, AeFilterItem, AeFilterSeparator } from 'aepp-components-davidyuk';
-  import AeLoader from './AeLoader';
+  import {
+    AeFilterList, AeFilterItem, AeFilterSeparator, AeLoader,
+  } from '@aeternity/aepp-components';
   import QuestionListItem from './QuestionListItem';
 
   export default {

@@ -1,19 +1,40 @@
 <template>
   <ae-main>
-    <ae-header-alert v-if="alert" @close="closeAlert">
-      {{alert}}
-    </ae-header-alert>
-    <ae-header v-else name="Questions">
-      <ae-header-button @click="toggleCreateQuestionModal()">
-        <i class="fa fa-plus" /> Create New
-      </ae-header-button>
+    <ae-header name="Questions">
+      <ae-button
+        type="dramatic"
+        @click="toggleCreateQuestionModal">
+        <ae-icon
+          slot="icon"
+          invert
+          type="dramatic"
+          name="plus" /> Create New
+      </ae-button>
 
-      <ae-add-button
+      <ae-button
         slot="mobile-right"
-        icon
-        @click="toggleCreateQuestionModal()"
-      />
+        type="dramatic"
+        @click="toggleCreateQuestionModal"
+      >
+        <ae-icon
+          slot="icon"
+          invert
+          type="dramatic"
+          name="plus" />
+      </ae-button>
     </ae-header>
+    <ae-banner v-if="alert">
+      {{ alert }}
+      <ae-button
+        slot="right"
+        plain
+        size="small"
+        @click="() => closeAlert()">
+        <ae-icon
+          slot="icon"
+          name="close" />
+      </ae-button>
+    </ae-banner>
 
     <router-view />
 
@@ -25,8 +46,8 @@
 <script>
   import { mapState, mapMutations } from 'vuex';
   import {
-    AeMain, AeHeader, AeHeaderButton, AeHeaderAlert, AeAddButton,
-  } from 'aepp-components-davidyuk';
+    AeMain, AeHeader, AeBanner, AeButton, AeIcon,
+  } from '@aeternity/aepp-components';
   import CreateQuestionModal from './components/CreateQuestionModal';
   import SupportAuthorModal from './components/SupportModal';
 
@@ -37,9 +58,9 @@
     components: {
       AeMain,
       AeHeader,
-      AeHeaderButton,
-      AeHeaderAlert,
-      AeAddButton,
+      AeBanner,
+      AeButton,
+      AeIcon,
       CreateQuestionModal,
       SupportAuthorModal,
     },
@@ -63,58 +84,38 @@
   };
 </script>
 
-<style lang="scss">
-  @import "../node_modules/font-awesome/css/font-awesome.css";
-  @import '~aepp-components-davidyuk/dist/variables.scss';
+<style lang="scss" scoped>
+  @import '~@aeternity/aepp-components/dist/variables.scss';
 
-  .secondary {
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 16px;
-    letter-spacing: 0.3px;
-    text-align: center;
-    color: $grey;
-    margin-top: 15px;
-
-    span {
-      color: $maegenta;
-      font-weight: bold;
-      font-family: 'Roboto Mono', monospace;
-    }
+  .ae-banner {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
   }
 
-  .ae-modal {
-    label {
-      display: block;
-      text-transform: uppercase;
+  /deep/ {
+    .secondary {
+      font-size: 14px;
       font-weight: 500;
-      margin-top: 25px;
+      line-height: 16px;
+      letter-spacing: 0.3px;
+      text-align: center;
+      color: $grey;
+      margin-top: 15px;
 
-      .help {
-        font-size: 13px;
-        float: right;
-        text-transform: none;
-        color: $grey;
-
-        &.danger {
-          color: $maegenta;
-        }
+      span {
+        color: $maegenta;
+        font-weight: bold;
+        font-family: 'Roboto Mono', monospace;
       }
     }
 
-    input, select, textarea, .ae-amount {
-      margin: 10px 0;
-    }
-
-    .ae-amount > input {
-      margin: 0;
-    }
-  }
-
-  .ae-content-button {
-    img {
-      height: 24px;
-      margin-right: 15px;
+    .ae-content-button {
+      img {
+        height: 24px;
+        margin-right: 15px;
+      }
     }
   }
 </style>

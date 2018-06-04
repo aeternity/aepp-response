@@ -4,12 +4,13 @@
       <img v-if="avatarUrl" :src="avatarUrl" class="avatar" />
       <div v-else class="avatar" />
 
-      <label :for="`${_uid}_twitter`">
+      <ae-label
+        :for="`${_uid}_twitter`"
+        help-type="dramatic"
+        :help-text="errors.first('twitter')"
+      >
         Twitter account
-        <span class="help" :class="{ danger: errors.has('twitter') }">
-          {{errors.first('twitter')}}
-        </span>
-      </label>
+      </ae-label>
       <text-muted small>
         Choose a Twitter account from whom you want a video answer.
       </text-muted>
@@ -18,61 +19,69 @@
         :id="`${_uid}_twitter`"
         v-model="twitterUserId"
         v-validate="'required'"
-        :class="{ danger: errors.has('twitter') }"
       />
 
-      <label :for="`${_uid}_title`">
+      <ae-label
+        :for="`${_uid}_title`"
+        :help-type="errors.has('title') ? 'dramatic' : undefined"
+        :help-text="errors.first('title') || `characters left: ${50 - title.length}`"
+      >
         Question – short
-        <span class="help" :class="{ danger: errors.has('title') }">
-          <template v-if="!errors.has('title')">characters left: {{50 - title.length}}</template>
-          {{errors.first('title')}}
-        </span>
-      </label>
-      <input
+      </ae-label>
+      <ae-input
         placeholder="Enter short question"
         name="title"
         :id="`${_uid}_title`"
         v-model="title"
         v-validate="'required|max:50'"
-        :class="{ danger: errors.has('title') }"
       />
 
-      <label :for="`${_uid}_body`">
+      <ae-label
+        :for="`${_uid}_body`"
+        :help-type="errors.has('body') ? 'dramatic' : undefined"
+        :help-text="errors.first('body') || `characters left: ${200 - body.length}`"
+      >
         Description
-        <span class="help" :class="{ danger: errors.has('body') }">
-          <template v-if="!errors.has('body')">characters left: {{200 - body.length}}</template>
-          {{errors.first('body')}}
-        </span>
-      </label>
-      <textarea
+      </ae-label>
+      <ae-textarea
         placeholder="Write an extended description"
         name="body"
         :id="`${_uid}_body`"
         v-model="body"
         v-validate="'max:200'"
-        :class="{ danger: errors.has('body') }"
       />
 
-      <label>Your donation</label>
+      <ae-label
+        :for="`${_uid}_amount`"
+        help-type="dramatic"
+        :help-text="errors.first('amount')"
+      >Your donation</ae-label>
       <text-muted small>
         Once you get a reply to your question this amount
         will be donated to a foundation of your choice.
       </text-muted>
-      <ae-amount v-model="amount" :min="1" />
+      <ae-amount-input
+        name="amount"
+        :id="`${_uid}_amount`"
+        :value="{ amount, symbol: 'AE' }"
+        @input="value => amount = value.amount"
+        v-validate:amount="'min_value:1'"
+        :units="[{ symbol: 'AE', name: 'æternity' }]"
+      />
 
-      <label :for="`${_uid}_foundation`">
+      <ae-label
+        :for="`${_uid}_foundation`"
+        help-type="dramatic"
+        :help-text="errors.first('foundation')"
+      >
         Foundation
-        <span class="help" :class="{ danger: errors.has('foundation') }">
-          {{errors.first('foundation')}}
-        </span>
-      </label>
-      <select
+      </ae-label>
+      <ae-select
         placeholder="Enter short question"
         name="foundation"
         :id="`${_uid}_foundation`"
         v-model="foundationId"
         v-validate="'required'"
-        :class="{ danger: errors.has('foundation'), unselected: !foundationId }"
       >
         <option value="" disabled>Chose Foundation</option>
         <option
@@ -81,7 +90,7 @@
         >
           {{foundation.name}}
         </option>
-      </select>
+      </ae-select>
 
       <ae-content-button submit :disabled="!account">
         <img :src="require(`emoji-datasource-apple/img/apple/64/1f4b0.png`)" />
@@ -98,8 +107,11 @@
 <script>
   import { mapState, mapMutations } from 'vuex';
   import { focus } from 'vue-focus';
-  import { AeModal, AeAmount } from 'aepp-components-davidyuk';
+  import {
+    AeModal, AeLabel, AeInput, AeTextarea, AeAmountInput,
+  } from '@aeternity/aepp-components';
   import AeContentButton from './AeContentButton';
+  import AeSelect from './AeSelect';
   import TextMuted from './TextMuted';
   import TwitterAccountInput from './TwitterAccountInput';
 
@@ -113,7 +125,17 @@
         foundationId: '',
       };
     },
-    components: { AeModal, TextMuted, AeAmount, AeContentButton, TwitterAccountInput },
+    components: {
+      AeModal,
+      AeLabel,
+      AeInput,
+      AeTextarea,
+      AeAmountInput,
+      AeContentButton,
+      AeSelect,
+      TextMuted,
+      TwitterAccountInput,
+    },
     directives: { focus },
     computed: mapState({
       visible: state => state.response.createQuestionModalShown,
@@ -148,7 +170,7 @@
 </script>
 
 <style lang="scss" scoped>
-  @import '~aepp-components-davidyuk/dist/variables.scss';
+  @import '~@aeternity/aepp-components/dist/variables.scss';
 
   .create-question-modal {
     .avatar {
@@ -159,43 +181,6 @@
       border-radius: 45px;
       background-color: $silver;
       border: 0;
-    }
-
-    input, select {
-      display: block;
-    }
-    input, select, textarea {
-      border-radius: 10px;
-      font-size: 16px;
-      border: solid 2px $smoke;
-      width: 100%;
-      box-sizing: border-box;
-      background-color: $white;
-
-      &::placeholder, &.unselected {
-        color: $silver;
-      }
-
-      &.danger {
-        border-color: $maegenta;
-      }
-    }
-    input, textarea {
-      padding: 7px 13px;
-      line-height: 26px;
-    }
-    select {
-      padding: 10.5px 13px;
-
-      option:enabled {
-        color: $anthracite;
-      }
-    }
-    input[type=date] {
-      padding: 6px 13px;
-    }
-    textarea {
-      min-height: 135px;
     }
 
     .text-muted {

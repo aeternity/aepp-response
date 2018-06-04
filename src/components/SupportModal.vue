@@ -1,8 +1,19 @@
 <template>
   <ae-modal v-if="questionId" title="Support Question" @close="closeHandler">
     <form class="create-question-modal" @submit.prevent="supportQuestion">
-      <label>Amount</label>
-      <ae-amount v-model="amount" :min="1" />
+      <ae-label
+        :for="`${_uid}_amount`"
+        help-type="dramatic"
+        :help-text="errors.first('amount')"
+      >Amount</ae-label>
+      <ae-amount-input
+        name="amount"
+        :id="`${_uid}_amount`"
+        :value="{ amount, symbol: 'AE' }"
+        @input="value => amount = value.amount"
+        v-validate:amount="'min_value:1'"
+        :units="[{ symbol: 'AE', name: 'æternity' }]"
+      />
 
       <ae-content-button submit :disabled="!account">
         <img :src="require(`emoji-datasource-apple/img/apple/64/1f44f.png`)" />
@@ -23,7 +34,7 @@
 <script>
   import { mapState } from 'vuex';
   import { focus } from 'vue-focus';
-  import { AeModal, AeAmount } from 'aepp-components-davidyuk';
+  import { AeModal, AeLabel, AeAmountInput } from '@aeternity/aepp-components';
   import AeContentButton from './AeContentButton';
 
   export default {
@@ -32,7 +43,7 @@
         amount: 1,
       };
     },
-    components: { AeModal, AeAmount, AeContentButton },
+    components: { AeModal, AeLabel, AeAmountInput, AeContentButton },
     directives: { focus },
     computed: mapState({
       questionId: state => state.response.supportModalQuestion,
